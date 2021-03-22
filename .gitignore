@@ -1,0 +1,4 @@
+*.code-workspace
+vendor
+tests
+.DS_Store

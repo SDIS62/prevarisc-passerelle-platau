@@ -1,0 +1,23 @@
+#!/usr/bin/env php
+<?php
+
+require_once __DIR__.'/../vendor/autoload.php';
+
+use App\Console;
+use Symfony\Component\Console\Input\ArgvInput;
+
+// Récupération du chemin vers le fichier de configuration
+$argvInput = new ArgvInput();
+if (!$argvInput->hasParameterOption('--config')) {
+    throw new Exception("Configuration requise");
+}
+$config_path = $argvInput->getParameterOption('--config');
+
+// Chargement du fichier de configuration.
+// Le chemin vers le fichier de configuration donné doit être relatif à l'executable platau.
+$config = file_get_contents(getcwd() . '/' . $config_path);
+$config = json_decode($config, true, 512, \JSON_THROW_ON_ERROR);
+
+// Construction de l'application console avec la configuration donnée
+$application = new Console($config);
+$application->run();

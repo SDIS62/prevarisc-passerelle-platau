@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Command;
+
+use Exception;
+use App\Service\Prevarisc as PrevariscService;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputInterface;
+use App\Service\PlatauActeur as PlatauActeurService;
+use Symfony\Component\Console\Output\OutputInterface;
+use App\Service\PlatauConsultation as PlatauConsultationService;
+use App\Service\PlatauNotification as PlatauNotificationService;
+
+final class ImportConsultations extends Command
+{
+    /**
+     * Initialisation de la commande.
+     */
+    public function __construct(PrevariscService $prevarisc_service, PlatauConsultationService $consultation_service, PlatauNotificationService $notification_service, PlatauActeurService $acteur_service)
+    {
+        $this->prevarisc_service    = $prevarisc_service;
+        $this->acteur_service       = $acteur_service;
+        $this->consultation_service = $consultation_service;
+        $this->notification_service = $notification_service;
+        parent::__construct();
+    }
+
+    /**
+     * Configuration de la commande.
+     */
+    protected function configure()
+    {
+        $this->setName('import')
+            ->setDescription('Détecte et importe de nouvelles consultations dans Prevarisc.')
+            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Chemin vers le fichier de configuration');
+    }
+
+    /**
+     * Logique d'execution de la commande.
+     */
+    protected function execute(InputInterface $input, OutputInterface $output) : int
+    {
+        // Récupération des notifications
+        $output->writeln('Récupération des notifications ...');
+        $notifications = $this->notification_service->rechercheNotifications(['offset' => 0]);
+
+        // Si il n'existe pas de notifications, on arrête le travail ici
+        if (empty($notifications)) {
+            $output->writeln('Pas de notifications nous concernant. On vérifiera plus tard si il y en a de nouvelles !');
+
+            return Command::SUCCESS;
+        }
+
+        // Si on se trouve ici, c'est qu'on a des notifications à traiter. On va donc rechercher les notifications qui nous intéressent.
+        foreach ($notifications as $notification) {
+            // Si la consultation répond à nos critères ci dessous, on la traite.
+            // - Type événement 19 : Versement d'une nouvelle consultation (le service consultable a été *consulté*)
+            // - Type objet 6 : Notification concernant une Consultation
+            if (19 === $notification['idTypeEvenement'] && 6 === $notification['idTypeObjetMetier']) {
+                // On récupère l'identifant de la consultation
+                $consultation_id = $notification['idElementConcerne'];
+
+                // On va essayer de traiter la consultation
+                try {
+                    // La consultation existe t'elle déjà dans Prevarisc ? Si oui, on ignore complètement la consultation
+                    if ($this->prevarisc_service->consultationExiste($consultation_id)) {
+                        $output->writeln("Consultation $consultation_id déjà existante dans Prevarisc");
+                        continue;
+                    }
+
+                    // Avec la consultation Platau, on va :
+                    // - Récupérer les données de la consultation
+                    // - Extraire les informations sur le projet, l'établissement concerné, le dossier ...
+                    // - Télécharger les pièces consultatives
+                    // - Injecter le tout dans Prevarisc
+                    $output->writeln("Récupération de la consultation $consultation_id ...");
+
+                    // On recherche la consultation à traiter sur Plat'AU
+                    // On vient rechercher uniquement la consultation dans un état Versée (c'est à dire Non Traitée)
+                    $consultation = $this->consultation_service->getConsultation($consultation_id, ['nomEtatConsultation' => 1]);
+
+                    // On récupère les acteurs liés à la consultation
+                    $service_instructeur = null !== $consultation['dossier']['idServiceInstructeur'] ? $this->acteur_service->recuperationActeur($consultation['dossier']['idServiceInstructeur']) : null;
+                    $demandeur           = null !== $consultation['idServiceConsultant'] ? $this->acteur_service->recuperationActeur($consultation['idServiceConsultant']) : null;
+
+                    // Versement de la consultation dans Prevarisc
+                    $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
+
+                    // La consultation est importée !
+                    $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");
+                } catch (Exception $e) {
+                    $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
+                }
+            }
+        }
+
+        return Command::SUCCESS;
+    }
+}
