@@ -37,9 +37,9 @@ final class ExportAvis extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
-        // On récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte avec une intention de prescrire")
+        // On récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte - en cours de traitement")
         $output->writeln('Recherche de consultations en attente d\'avis ...');
-        $consultations_en_attente_davis = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 4]);
+        $consultations_en_attente_davis = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 3]);
 
         // Pour chaque consultation trouvée, on va chercher dans Prevarisc si un avis existe.
         foreach ($consultations_en_attente_davis as $consultation) {
