@@ -125,11 +125,12 @@ class Prevarisc
             ])));
 
             // On note dans les observations du dossier des données importantes de Plat'AU (dates, type de consulation ...)
-            $query_builder->setValue('OBSERVATION_DOSSIER', $query_builder->createPositionalParameter(vsprintf('Consultation PLATAU : Consultation de type %s décidée le %s et transmise au service consultable le %s. Une réponse est attendue dans %s mois.', [
+            $query_builder->setValue('OBSERVATION_DOSSIER', $query_builder->createPositionalParameter(vsprintf('Consultation PLATAU : Consultation de type %s décidée le %s et transmise au service consultable le %s. Une réponse est attendue dans %s mois. (ID PLATAU DOSSIER : %s)', [
                 $consultation['nomTypeConsultation']['libNom'] ?? 'INCONNUE',
                 $consultation['dtConsultation'] ?? 'DATE CONSULTATION INCONNUE',
                 $consultation['dtEmission'] ?? 'DATE EMISSION INCONNUE',
                 $consultation['delaiDeReponseEnMois'] ?? 'DELAI INCONNU',
+                $consultation['dossier']['idDossier'] ?? 'ID INCONNU',
             ])));
 
             // Les champs suivant doivent être mis à NULL manuellement, car aucune valeur par défaut n'est prévue dans la base de données
