@@ -41,57 +41,45 @@ final class ImportConsultations extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
-        // Récupération des notifications
-        $output->writeln('Récupération des notifications ...');
-        $notifications = $this->notification_service->rechercheNotifications(['offset' => 0]);
+        // Récupération des consultations dans un état Versée (c'est à dire Non Traitée)
+        $output->writeln('Récupération des consultations versées  ...');
+        $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
 
-        // Si il n'existe pas de notifications, on arrête le travail ici
-        if (empty($notifications)) {
-            $output->writeln('Pas de notifications nous concernant. On vérifiera plus tard si il y en a de nouvelles !');
+        // Si il n'existe pas de consultations, on arrête le travail ici
+        if (empty($consultations)) {
+            $output->writeln('Pas de consultations nous concernant. On vérifiera plus tard si il y en a de nouvelles !');
 
             return Command::SUCCESS;
         }
 
-        // Si on se trouve ici, c'est qu'on a des notifications à traiter. On va donc rechercher les notifications qui nous intéressent.
-        foreach ($notifications as $notification) {
-            // Si la consultation répond à nos critères ci dessous, on la traite.
-            // - Type événement 19 : Versement d'une nouvelle consultation (le service consultable a été *consulté*)
-            // - Type objet 6 : Notification concernant une Consultation
-            if (19 === $notification['idTypeEvenement'] && 6 === $notification['idTypeObjetMetier']) {
-                // On récupère l'identifant de la consultation
-                $consultation_id = $notification['idElementConcerne'];
+        // Si on se trouve ici, c'est qu'on a des consultations à traiter.
+        foreach ($consultations as $consultation) {
+            // On récupère l'identifant de la consultation
+            $consultation_id = $consultation['idConsultation'];
 
-                // On va essayer de traiter la consultation
-                try {
-                    // La consultation existe t'elle déjà dans Prevarisc ? Si oui, on ignore complètement la consultation
-                    if ($this->prevarisc_service->consultationExiste($consultation_id)) {
-                        $output->writeln("Consultation $consultation_id déjà existante dans Prevarisc");
-                        continue;
-                    }
-
-                    // Avec la consultation Platau, on va :
-                    // - Récupérer les données de la consultation
-                    // - Extraire les informations sur le projet, l'établissement concerné, le dossier ...
-                    // - Télécharger les pièces consultatives
-                    // - Injecter le tout dans Prevarisc
-                    $output->writeln("Récupération de la consultation $consultation_id ...");
-
-                    // On recherche la consultation à traiter sur Plat'AU
-                    // On vient rechercher uniquement la consultation dans un état Versée (c'est à dire Non Traitée)
-                    $consultation = $this->consultation_service->getConsultation($consultation_id, ['nomEtatConsultation' => 1]);
-
-                    // On récupère les acteurs liés à la consultation
-                    $service_instructeur = null !== $consultation['dossier']['idServiceInstructeur'] ? $this->acteur_service->recuperationActeur($consultation['dossier']['idServiceInstructeur']) : null;
-                    $demandeur           = null !== $consultation['idServiceConsultant'] ? $this->acteur_service->recuperationActeur($consultation['idServiceConsultant']) : null;
-
-                    // Versement de la consultation dans Prevarisc
-                    $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
-
-                    // La consultation est importée !
-                    $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");
-                } catch (Exception $e) {
-                    $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
+            // Avec la consultation Platau, on va tenter de :
+            // - Récupérer les données de la consultation
+            // - Extraire les informations sur le projet, l'établissement concerné, le dossier ...
+            // - Télécharger les pièces consultatives
+            // - Injecter le tout dans Prevarisc
+            try {
+                // La consultation existe t'elle déjà dans Prevarisc ? Si oui, on ignore complètement la consultation
+                if ($this->prevarisc_service->consultationExiste($consultation_id)) {
+                    $output->writeln("Consultation $consultation_id déjà existante dans Prevarisc");
+                    continue;
                 }
+
+                // On récupère les acteurs liés à la consultation
+                $service_instructeur = null !== $consultation['dossier']['idServiceInstructeur'] ? $this->acteur_service->recuperationActeur($consultation['dossier']['idServiceInstructeur']) : null;
+                $demandeur           = null !== $consultation['idServiceConsultant'] ? $this->acteur_service->recuperationActeur($consultation['idServiceConsultant']) : null;
+
+                // Versement de la consultation dans Prevarisc
+                $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
+
+                // La consultation est importée !
+                $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");
+            } catch (Exception $e) {
+                $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
             }
         }
 
