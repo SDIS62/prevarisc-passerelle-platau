@@ -29,6 +29,7 @@ final class ExportAvis extends Command
     {
         $this->setName('export-avis')
             ->setDescription("Exporte un avis Prevarisc sur Plat'AU.")
+            ->addOption('consultation-id', null, InputOption::VALUE_OPTIONAL, 'Consultation concernée')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Chemin vers le fichier de configuration');
     }
 
@@ -37,9 +38,16 @@ final class ExportAvis extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
-        // On récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte - en cours de traitement")
-        $output->writeln('Recherche de consultations en attente d\'avis ...');
-        $consultations_en_attente_davis = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 3]);
+        // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
+        // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte - en cours de traitement")
+        if($input->getOption('consultation-id')) {
+            $output->writeln('Récupération de la consultation concernée ...');
+            $consultations_en_attente_davis = [$this->consultation_service->getConsultation($input->getOption('consultation-id'))];
+        }
+        else {
+            $output->writeln('Recherche de toutes les consultations en attente d\'avis ...');
+            $consultations_en_attente_davis = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 3]);
+        }
 
         // Pour chaque consultation trouvée, on va chercher dans Prevarisc si un avis existe.
         foreach ($consultations_en_attente_davis as $consultation) {

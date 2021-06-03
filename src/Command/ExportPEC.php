@@ -29,6 +29,7 @@ final class ExportPEC extends Command
     {
         $this->setName('export-pec')
             ->setDescription("Exporte des Prises En Compte métier sur Plat'AU.")
+            ->addOption('consultation-id', null, InputOption::VALUE_OPTIONAL, 'Consultation concernée')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Chemin vers le fichier de configuration');
     }
 
@@ -37,9 +38,16 @@ final class ExportPEC extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
-        // On récupère dans Plat'AU l'ensemble des consultations en attente de PEC (c'est à dire avec un état "Non Traitée")
-        $output->writeln('Recherche de consultations en attente de prise en compte métier ...');
-        $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
+        // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
+        // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente de PEC (c'est à dire avec un état "Non Traitée")
+        if($input->getOption('consultation-id')) {
+            $output->writeln('Récupération de la consultation concernée ...');
+            $consultations_en_attente_de_pec = [$this->consultation_service->getConsultation($input->getOption('consultation-id'))];
+        }
+        else {
+            $output->writeln('Recherche de consultations en attente de prise en compte métier ...');
+            $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
+        }
 
         // Pour chaque consultation trouvée, on va chercher dans Prevarisc si la complétion (ou non) du dossier a été indiquée.
         foreach ($consultations_en_attente_de_pec as $consultation) {

@@ -77,7 +77,7 @@ Concrétement, on indique au service consultant que le dossier sera traité (ou 
 
 Pour envoyer les Prises En Compte des consultations dans Plat'AU :
 ```
-$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json export-pec
+$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json [--consultation-id=xxx-xxx-xxx] export-pec
 ```
 
 #### Avis de commission
@@ -86,5 +86,5 @@ Les avis de commission (ainsi que les prescriptions) des dossiers d'étude liés
 
 Pour envoyer les avis de commission dans Plat'AU :
 ```
-$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json export-avis
+$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json [--consultation-id=xxx-xxx-xxx] export-avis
 ```
