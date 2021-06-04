@@ -130,7 +130,7 @@ final class PlatauConsultation extends PlatauAbstract
     public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = []) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée
-        $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => 4]);
+        $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => 3]);
 
         // Création du texte formulant l'avis
         $description = vsprintf('Avis Prevarisc. Prescriptions données : %s', [
