@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use Exception;
+use DateInterval;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -30,6 +31,7 @@ final class ExportPEC extends Command
         $this->setName('export-pec')
             ->setDescription("Exporte des Prises En Compte métier sur Plat'AU.")
             ->addOption('consultation-id', null, InputOption::VALUE_OPTIONAL, 'Consultation concernée')
+            ->addOption('delai-reponse', null, InputOption::VALUE_OPTIONAL, 'DLR différente de celle inscrite dans la PEC (en nombre de jours)')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Chemin vers le fichier de configuration');
     }
 
@@ -49,6 +51,12 @@ final class ExportPEC extends Command
             $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
         }
 
+        // Si une DLR personnalisée est demandée par l'utilisateur
+        $delai_reponse = null;
+        if($input->getOption('delai-reponse')) {
+            $delai_reponse = new DateInterval("P{$input->getOption('delai-reponse')}D");
+        }
+
         // Pour chaque consultation trouvée, on va chercher dans Prevarisc si la complétion (ou non) du dossier a été indiquée.
         foreach ($consultations_en_attente_de_pec as $consultation) {
             // Récupération de l'ID de la consultation
@@ -62,11 +70,11 @@ final class ExportPEC extends Command
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->envoiPEC($consultation_id, false);
+                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse);
                     $output->writeln('Notification de la Prise En Compte Négative envoyée !');
                 } elseif ('0' === $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->envoiPEC($consultation_id, true);
+                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse);
                     $output->writeln('Notification de la Prise En Compte Positive envoyée !');
                 } else {
                     $output->writeln("Impossible d'envoyer une PEC pour la consultation $consultation_id pour le moment (en attente de l'indication de complétude du dossier dans Prevarisc) ...");
