@@ -83,14 +83,23 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
 
-        // Définition de la DLR à envoyer (correspond à la date d'instruction donnée dans la consultation)
-        $date_limite_reponse_en_mois = $consultation['delaiDeReponseEnMois'];
-
+        // Définition de la DLR à envoyer
+        // Correspond à la date d'instruction donnée dans la consultation si aucune date limite est donnée
+        if($date_limite_reponse_interval === null) {
+            $delai_reponse            = $consultation['delaiDeReponse'];
+            $type_date_limite_reponse = $consultation['nomTypeDelai']['libNom'];
+            switch($type_date_limite_reponse) {
+                case 'Jours calendaires': $date_limite_reponse_interval = new DateInterval("P${delai_reponse}D"); break;
+                case 'Mois': $date_limite_reponse_interval = new DateInterval("P${delai_reponse}M"); break;
+                default: throw new Exception("Type de la date de réponse attendue inconnu : " . $type_date_limite_reponse);
+            }
+        }
+        
         // Envoie de la PEC dans Plat'AU
         $this->request('post', 'pecMetier/consultations', [
             'json' => [
@@ -102,7 +111,7 @@ final class PlatauConsultation extends PlatauAbstract
                             'pecMetier'      => [
                                 'boIntentionDePrescrire' => false,
                                 'dtPecMetier'            => (new Datetime())->format('Y-m-d'),
-                                'dtLimiteReponse'        => (new Datetime())->add(new DateInterval("P${date_limite_reponse_en_mois}M"))->format('Y-m-d'),
+                                'dtLimiteReponse'        => (new Datetime())->add($date_limite_reponse_interval)->format('Y-m-d'),
                                 'idActeurEmetteur'       => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
                                 'nomStatutPecMetier'     => $est_positive ? 1 : 2,
                             ],

@@ -125,11 +125,12 @@ class Prevarisc
             ])));
 
             // On note dans les observations du dossier des données importantes de Plat'AU (dates, type de consulation ...)
-            $query_builder->setValue('OBSERVATION_DOSSIER', $query_builder->createPositionalParameter(vsprintf('Consultation PLATAU : Consultation de type %s décidée le %s et transmise au service consultable le %s. Une réponse est attendue dans %s mois. (ID PLATAU DOSSIER : %s)', [
+            $query_builder->setValue('OBSERVATION_DOSSIER', $query_builder->createPositionalParameter(vsprintf('Consultation PLATAU : Consultation de type %s décidée le %s et transmise au service consultable le %s. Une réponse est attendue dans %s %s. (ID PLATAU DOSSIER : %s)', [
                 $consultation['nomTypeConsultation']['libNom'] ?? 'INCONNUE',
                 $consultation['dtConsultation'] ?? 'DATE CONSULTATION INCONNUE',
                 $consultation['dtEmission'] ?? 'DATE EMISSION INCONNUE',
-                $consultation['delaiDeReponseEnMois'] ?? 'DELAI INCONNU',
+                $consultation['delaiDeReponse'] ?? 'DELAI INCONNU',
+                $consultation['nomTypeDelai']['libNom'] ?? '',
                 $consultation['dossier']['idDossier'] ?? 'ID INCONNU',
             ])));
 
