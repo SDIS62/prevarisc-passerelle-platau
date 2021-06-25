@@ -165,13 +165,13 @@ class Prevarisc
             $dossier_id = $this->db->lastInsertId();
 
             // Insertion des numéros de document d'urbanisme (PC, AT ...)
-            if($consultation['dossier']['noLocal'] !== null) {
+            if (null !== $consultation['dossier']['noLocal']) {
                 $this->db->createQueryBuilder()->insert('dossierdocurba')->values([
                     'NUM_DOCURBA' => $consultation['dossier']['noLocal'],
                     'ID_DOSSIER'  => $dossier_id,
                 ])->execute();
             }
-            
+
             // On lie la nature du dossier Plat'AU avec celui de Prevarisc (avec l'aide d'une table de correspondance)
             $this->db->createQueryBuilder()->insert('dossiernature')->values([
                 'ID_NATURE'  => $this->correspondanceNaturePrevarisc($consultation['dossier']['nomTypeDossier']['idNom']),

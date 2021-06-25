@@ -90,16 +90,16 @@ final class PlatauConsultation extends PlatauAbstract
 
         // Définition de la DLR à envoyer
         // Correspond à la date d'instruction donnée dans la consultation si aucune date limite est donnée
-        if($date_limite_reponse_interval === null) {
+        if (null === $date_limite_reponse_interval) {
             $delai_reponse            = $consultation['delaiDeReponse'];
             $type_date_limite_reponse = $consultation['nomTypeDelai']['libNom'];
-            switch($type_date_limite_reponse) {
+            switch ($type_date_limite_reponse) {
                 case 'Jours calendaires': $date_limite_reponse_interval = new DateInterval("P${delai_reponse}D"); break;
-                case 'Mois': $date_limite_reponse_interval = new DateInterval("P${delai_reponse}M"); break;
-                default: throw new Exception("Type de la date de réponse attendue inconnu : " . $type_date_limite_reponse);
+                case 'Mois': $date_limite_reponse_interval              = new DateInterval("P${delai_reponse}M"); break;
+                default: throw new Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
             }
         }
-        
+
         // Envoie de la PEC dans Plat'AU
         $this->request('post', 'pecMetier/consultations', [
             'json' => [
