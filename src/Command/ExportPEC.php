@@ -42,18 +42,17 @@ final class ExportPEC extends Command
     {
         // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
         // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente de PEC (c'est à dire avec un état "Non Traitée")
-        if($input->getOption('consultation-id')) {
+        if ($input->getOption('consultation-id')) {
             $output->writeln('Récupération de la consultation concernée ...');
             $consultations_en_attente_de_pec = [$this->consultation_service->getConsultation($input->getOption('consultation-id'))];
-        }
-        else {
+        } else {
             $output->writeln('Recherche de consultations en attente de prise en compte métier ...');
             $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
         }
 
         // Si une DLR personnalisée est demandée par l'utilisateur
         $delai_reponse = null;
-        if($input->getOption('delai-reponse')) {
+        if ($input->getOption('delai-reponse')) {
             $delai_reponse = new DateInterval("P{$input->getOption('delai-reponse')}D");
         }
 
