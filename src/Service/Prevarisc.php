@@ -236,7 +236,7 @@ class Prevarisc
             $query_builder = $this->db->createQueryBuilder();
             $query_builder->insert('piecejointe')->values([
                 'NOM_PIECEJOINTE'         => $query_builder->createPositionalParameter($filename),
-                'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter($extension),
+                'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter('.' . $extension),
                 'DATE_PIECEJOINTE'        => $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d')),
                 'DESCRIPTION_PIECEJOINTE' => $query_builder->createPositionalParameter($description),
             ])->execute();
