@@ -36,6 +36,7 @@ final class Platau implements ServiceProvider
         $container->set('service.platau.consultation', new Service\PlatauConsultation($config));
         $container->set('service.platau.notification', new Service\PlatauNotification($config));
         $container->set('service.platau.acteur', new Service\PlatauActeur($config));
+        $container->set('service.platau.piece', new Service\PlatauPiece($config));
         $container->set('service.platau.healthcheck', new Service\PlatauHealthcheck($config));
     }
 }

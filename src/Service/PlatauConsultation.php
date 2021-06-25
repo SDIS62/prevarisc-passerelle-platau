@@ -58,7 +58,7 @@ final class PlatauConsultation extends PlatauAbstract
         $consultation = $this->getConsultation($consultation_id);
 
         // On recherche maintenant l'ensemble des pièces liées au dossier
-        $response = $this->request('get', 'dossier/' + $consultation['dossier']['idDossier'] + '/pieces');
+        $response = $this->request('get', 'dossiers/'.$consultation['dossier']['idDossier'].'/pieces');
 
         // On vient récupérer les pièces qui nous interesse dans la réponse des résultats de recherche
         $pieces = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);

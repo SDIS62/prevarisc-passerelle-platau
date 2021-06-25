@@ -2,6 +2,7 @@
 
 namespace App\ServiceProvider;
 
+use League\Flysystem;
 use UMA\DIC\Container;
 use UMA\DIC\ServiceProvider;
 use Doctrine\DBAL\DriverManager;
@@ -25,6 +26,7 @@ final class Prevarisc implements ServiceProvider
             'PREVARISC_DB_CHARSET',
             'PREVARISC_DB_PORT',
             'PREVARISC_DB_PLATAU_USER_ID',
+            'PREVARISC_PIECES_JOINTES_PATH',
         ]);
         $this->config = $resolver->resolve($config);
     }
@@ -45,8 +47,12 @@ final class Prevarisc implements ServiceProvider
             'port'     => $this->config['PREVARISC_DB_PORT'],
         ]);
 
+        // Création d'une instance FlySystem pour stocker les pièces jointes
+        $adapter    = new Flysystem\Local\LocalFilesystemAdapter($this->config['PREVARISC_PIECES_JOINTES_PATH']);
+        $filesystem = new Flysystem\Filesystem($adapter);
+
         // Initialisation du service Prevarisc
-        $service = new PrevariscService($connection, $this->config['PREVARISC_DB_PLATAU_USER_ID']);
+        $service = new PrevariscService($connection, $this->config['PREVARISC_DB_PLATAU_USER_ID'], $filesystem);
 
         // On stocke le service dans le container
         $container->set('service.prevarisc', $service);

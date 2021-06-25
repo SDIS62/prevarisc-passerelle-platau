@@ -4,6 +4,7 @@ namespace App\Service;
 
 use Datetime;
 use Exception;
+use League\Flysystem;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Column;
 
@@ -12,13 +13,16 @@ class Prevarisc
     /**
      * Construction du service Prevarisc en lui donnant une connexion SQL.
      */
-    public function __construct(Connection $db, int $user_platau_id)
+    public function __construct(Connection $db, int $user_platau_id, Flysystem\Filesystem $filesystem)
     {
         // Connexion à la base de données
         $this->db = $db;
 
         // ID utilisateur pour lequel le service se fera passer pour ajouter des dossiers dans Prevarisc
         $this->user_platau_id = $user_platau_id;
+
+        // Composant filesystem permettant d'interargir avec les pièces jointes de Prevarisc
+        $this->filesystem = $filesystem;
     }
 
     /**
@@ -221,15 +225,39 @@ class Prevarisc
     /**
      * Importer des pièces jointes dans un dossier.
      */
-    public function creerPieceJointe(int $dossier_id, string $filename, string $extension, string $description = '') : void
+    public function creerPieceJointe(int $dossier_id, string $filename, string $extension, string $description, string $file_contents) : void
     {
-        $query_builder = $this->db->createQueryBuilder();
-        $query_builder->insert('piecejointe')->values([
-            'NOM_PIECEJOINTE'         => $query_builder->createPositionalParameter($filename),
-            'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter($extension),
-            'DATE_PIECEJOINTE'        => $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d')),
-            'DESCRIPTION_PIECEJOINTE' => $query_builder->createPositionalParameter($description),
-        ])->execute();
+        // On démarre une transaction SQL. Si jamais les choses se passent mal, on pourra revenir en arrière.
+        $this->db->beginTransaction();
+
+        try {
+            // Création de l'item pièce jointe
+            $query_builder = $this->db->createQueryBuilder();
+            $query_builder->insert('piecejointe')->values([
+                'NOM_PIECEJOINTE'         => $query_builder->createPositionalParameter($filename),
+                'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter($extension),
+                'DATE_PIECEJOINTE'        => $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d')),
+                'DESCRIPTION_PIECEJOINTE' => $query_builder->createPositionalParameter($description),
+            ])->execute();
+
+            $piece_jointe_id = $this->db->lastInsertId();
+
+            // Création de la liaison avec la pièce jointe et le dossier
+            $this->db->createQueryBuilder()->insert('dossierpj')->values([
+                'ID_PIECEJOINTE' => $piece_jointe_id,
+                'ID_DOSSIER'     => $dossier_id,
+                'PJ_COMMISSION'  => 0,
+            ])->execute();
+
+            // Stockage de la pièce jointe
+            $this->filesystem->write("$piece_jointe_id.$extension", $file_contents);
+
+            // On commit les changements
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     /**
