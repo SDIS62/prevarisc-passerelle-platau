@@ -26,10 +26,10 @@ final class Platau implements ServiceProvider
     {
         $config = [
             // Configuration d'environnement d'auth sur PISTE (https://developer.aife.economie.gouv.fr)
-            'PISTE_CLIENT_ID'        => getenv('PISTE_CLIENT_ID'),
-            'PISTE_CLIENT_SECRET'    => getenv('PISTE_CLIENT_SECRET'),
+            'PISTE_CLIENT_ID'        => $this->config['PISTE_CLIENT_ID'],
+            'PISTE_CLIENT_SECRET'    => $this->config['PISTE_CLIENT_SECRET'],
             // Configuration du client Plat'AU
-            'PLATAU_ID_ACTEUR_APPELANT' => getenv('PLATAU_ID_ACTEUR_APPELANT'),
+            'PLATAU_ID_ACTEUR_APPELANT' => $this->config['PLATAU_ID_ACTEUR_APPELANT'],
         ];
 
         // Création des services Plat'AU
