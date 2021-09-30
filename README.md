@@ -46,7 +46,8 @@ Voici un exemple d'un fichier JSON de configuration :
         "PREVARISC_DB_DRIVER": "pdo_mysql",
         "PREVARISC_DB_CHARSET": "utf8",
         "PREVARISC_DB_PORT": 3306,
-        "PREVARISC_DB_PLATAU_USER_ID": 0
+        "PREVARISC_DB_PLATAU_USER_ID": 0,
+        "PREVARISC_PIECES_JOINTES_PATH": "xxxxxxxxxx"
     }
 }
 ```
