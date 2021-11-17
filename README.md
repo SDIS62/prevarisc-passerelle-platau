@@ -58,6 +58,11 @@ $ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json h
 > RAS. Tout est disponible et prêt à l'emploi !
 ```
 
+>L'ensemble des communications entre Plat'AU et la passerelle nécessitent l'identification de l'acteur métier concerné (commission de sécurité, SDIS ...). C'est cet identifiant qu'il faut placer dans la valeur de configuration ```PLATAU_ID_ACTEUR_APPELANT```. Afin de faciliter l'enregistrement du SDIS dans l'univers Plat'AU, vous pouvez utiliser une commande d'enrôlement :
+>```
+>$ php bin/platau --designation=DESIGNATION_DU_SDIS --mail=xxxxx@sdisxx.fr --siren=XXXXXXXXX --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json enroler-acteur
+>```
+
 ### Utilisation
 
 #### Consultations

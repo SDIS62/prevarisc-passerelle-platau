@@ -26,5 +26,6 @@ final class Console extends Application
         $this->add(new Command\ImportConsultations($container->get('service.prevarisc'), $container->get('service.platau.consultation'), $container->get('service.platau.notification'), $container->get('service.platau.acteur')));
         $this->add(new Command\ExportPEC($container->get('service.prevarisc'), $container->get('service.platau.consultation')));
         $this->add(new Command\ExportAvis($container->get('service.prevarisc'), $container->get('service.platau.consultation')));
+        $this->add(new Command\EnrolerActeur($container->get('service.platau.acteur')));
     }
 }
