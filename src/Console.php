@@ -18,7 +18,6 @@ final class Console extends Application
         // Création d'un Container PSR-11 pour exposer des objets / configurations de façon standardisée
         $container = new Container();
         $container->register(new ServiceProvider\Prevarisc($config['prevarisc.options']));
-        $container->register(new ServiceProvider\FileStorageSystem());
         $container->register(new ServiceProvider\Platau($config['platau.options']));
 
         // Enregistrement des commandes disponibles
