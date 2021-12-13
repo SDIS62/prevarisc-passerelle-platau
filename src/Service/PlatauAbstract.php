@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\ServiceProvider\Platau;
 use GuzzleHttp\Client as HttpClient;
 use kamermans\OAuth2\OAuth2Middleware;
 use Psr\Http\Message\ResponseInterface;
@@ -11,9 +12,6 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 abstract class PlatauAbstract
 {
-    public const PLATAU_URL             = 'https://api.aife.economie.gouv.fr/mtes_preprod/platau/v5/';
-    public const PISTE_ACCESS_TOKEN_URL = 'https://oauth.aife.economie.gouv.fr/api/oauth/token';
-
     /**
      * Création d'une nouvelle instance d'un service Platau.
      * La configuration doit contenir au moins :
@@ -30,7 +28,7 @@ abstract class PlatauAbstract
         // Gestion des options de configuration.
         // (OptionsResolver allows to create an options system with required options, defaults, validation (type, value), normalization and more)
         $resolver = new OptionsResolver();
-        $resolver->setDefaults(['PLATAU_URL' => self::PLATAU_URL, 'PISTE_ACCESS_TOKEN_URL' => self::PISTE_ACCESS_TOKEN_URL]);
+        $resolver->setDefaults(['PLATAU_URL' => Platau::PLATAU_URL, 'PISTE_ACCESS_TOKEN_URL' => Platau::PISTE_ACCESS_TOKEN_URL]);
         $resolver->setRequired(['PISTE_CLIENT_ID', 'PISTE_CLIENT_SECRET', 'PLATAU_ID_ACTEUR_APPELANT']);
         $this->config = $resolver->resolve($config);
 

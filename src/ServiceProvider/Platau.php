@@ -9,12 +9,16 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class Platau implements ServiceProvider
 {
+    public const PLATAU_URL             = 'https://api.aife.economie.gouv.fr/mtes_preprod/platau/v5/';
+    public const PISTE_ACCESS_TOKEN_URL = 'https://oauth.aife.economie.gouv.fr/api/oauth/token';
+
     /**
      * Construction du service provider avec un tableau de configuration.
      */
     public function __construct(array $config)
     {
         $resolver = new OptionsResolver();
+        $resolver->setDefaults(['PLATAU_URL' => self::PLATAU_URL, 'PISTE_ACCESS_TOKEN_URL' => self::PISTE_ACCESS_TOKEN_URL]);
         $resolver->setRequired(['PISTE_CLIENT_ID', 'PISTE_CLIENT_SECRET', 'PLATAU_ID_ACTEUR_APPELANT']);
         $this->config = $resolver->resolve($config);
     }
@@ -25,6 +29,8 @@ final class Platau implements ServiceProvider
     public function provide(Container $container) : void
     {
         $config = [
+            'PLATAU_URL' => $this->config['PLATAU_URL'],
+            'PISTE_ACCESS_TOKEN_URL' => $this->config['PISTE_ACCESS_TOKEN_URL'],
             // Configuration d'environnement d'auth sur PISTE (https://developer.aife.economie.gouv.fr)
             'PISTE_CLIENT_ID'        => $this->config['PISTE_CLIENT_ID'],
             'PISTE_CLIENT_SECRET'    => $this->config['PISTE_CLIENT_SECRET'],
