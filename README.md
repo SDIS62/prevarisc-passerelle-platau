@@ -76,6 +76,13 @@ Cela va créer des dossiers d'étude dans Prevarisc correspondant aux demandes d
 Ces dossiers sont pré-remplis avec certaines méta-données présentes dans les consultations.
 Par défaut, il n'y a pas d'indication de complétude du dossier (complet / incomplet). Il appartient de saisir cette donnée dans Prevarisc afin d'envoyer dans un second temps des Prises En Compte métier dans Plat'AU.
 
+#### Récupération des pièces jointes
+
+Pour télécharger les pièces jointes liées aux consultations importées dans Prevarisc :
+```
+$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json import-pieces
+```
+
 #### Prises en compte métier
 
 Les dossiers d'études importés dans lesquels une information de complétude (complet / incomplet) est indiquée feront l'objet d'une Prise En Compte métier dans Plat'AU.
