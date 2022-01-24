@@ -224,10 +224,56 @@ class Prevarisc
     }
 
     /**
+     * Vérifie que la pièce jointe existe dans Prevarisc.
+     */
+    public function pieceJointeExisteDansDossier(int $dossier_id, string $filename) : bool
+    {
+        $query_builder = $this->db->createQueryBuilder();
+        
+        // Recherche de la pièce jointe dans un dossier Prevarisc
+        $piece_jointe = $query_builder
+            ->select('piecejointe.ID_PIECEJOINTE')
+            ->from('piecejointe')
+            ->leftJoin('piecejointe', 'dossierpj', 'dossierpj', 'piecejointe.ID_PIECEJOINTE = dossierpj.ID_PIECEJOINTE')
+            ->where(
+                $query_builder->expr()->and(
+                    $query_builder->expr()->eq('piecejointe.NOM_PIECEJOINTE', '?'),
+                    $query_builder->expr()->eq('dossierpj.ID_DOSSIER', '?')
+                )
+            )
+            ->setParameter(0, $filename)
+            ->setParameter(1, $dossier_id)
+            ->execute()->fetch();
+
+        return !empty($piece_jointe);
+    }
+
+    /**
      * Importer des pièces jointes dans un dossier.
      */
-    public function creerPieceJointe(int $dossier_id, string $filename, string $extension, string $description, string $file_contents) : void
+    public function creerPieceJointe(int $dossier_id, array $piece, string $extension, string $file_contents) : void
     {
+        // Génération du nom du fichier
+        $filename = vsprintf('PLATAU-%s-%s-v%d', [$piece['idPiece'], $piece['noPiece'], $piece['noVersion']]);
+
+        // Si le fichier existe déjà, on ne l'importe pas
+        if($this->pieceJointeExisteDansDossier($dossier_id, $filename)) {
+            return;
+        }
+
+        // Génération de la description
+        $description = vsprintf('%s v%s (Pièce %s avec un état %s. Elle a été déposée le %s et produite le %s.)', [
+            $piece['nomTypePiece']['libNom'].' '.$piece['libAutreTypePiece'],
+            $piece['noVersion'],
+            $piece['nomNaturePiece']['libNom'],
+            $piece['nomEtatPiece']['libNom'],
+            (new Datetime($piece['dtDepot']))->format('d/m/Y à H:i'),
+            (new Datetime($piece['dtProduction']))->format('d/m/Y à H:i'),
+        ]);
+
+        // Ajout d'un point avant l'extension
+        $extension = '.' . $extension;
+
         // On démarre une transaction SQL. Si jamais les choses se passent mal, on pourra revenir en arrière.
         $this->db->beginTransaction();
 
@@ -236,7 +282,7 @@ class Prevarisc
             $query_builder = $this->db->createQueryBuilder();
             $query_builder->insert('piecejointe')->values([
                 'NOM_PIECEJOINTE'         => $query_builder->createPositionalParameter($filename),
-                'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter('.' . $extension),
+                'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter($extension),
                 'DATE_PIECEJOINTE'        => $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d')),
                 'DESCRIPTION_PIECEJOINTE' => $query_builder->createPositionalParameter($description),
             ])->execute();
