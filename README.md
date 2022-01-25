@@ -80,7 +80,7 @@ Par défaut, il n'y a pas d'indication de complétude du dossier (complet / inco
 
 Pour télécharger les pièces jointes liées aux consultations importées dans Prevarisc :
 ```
-$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json import-pieces
+$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json [--force-non-pec] import-pieces
 ```
 
 #### Prises en compte métier
