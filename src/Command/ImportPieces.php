@@ -36,7 +36,8 @@ final class ImportPieces extends Command
     {
         $this->setName('import-pieces')
             ->setDescription('Détecte et importe / met à jour des pièces relatives aux consultations importées dans Prevarisc.')
-            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Chemin vers le fichier de configuration');
+            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Chemin vers le fichier de configuration')
+            ->addOption('force-non-pec', null, InputOption::VALUE_NONE, "Force le téléchargement des pièces des consultations non Prises En Charge");
     }
 
     /**
@@ -45,8 +46,16 @@ final class ImportPieces extends Command
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {   
         // Récupération des consultations un état "Prise en compte - en cours de traitement"
-        $output->writeln('Recherche de toutes les consultations en attente d\'avis ...');
-        $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 3]);
+        // Si le flag --force-non-pec est ajouté par l'utilisateur, on récupère TOUTES les consultations versées
+        if ($input->getOption('force-non-pec')) {
+            $output->writeln('Recherche de toutes les consultations versées (--force-non-pec) ...');
+            $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
+        }
+        else {
+            $output->writeln('Recherche de toutes les consultations en attente d\'avis ...');
+            $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 3]);
+        }
+        
 
         // Si il n'existe pas de consultations, on arrête le travail ici
         if (empty($consultations)) {
