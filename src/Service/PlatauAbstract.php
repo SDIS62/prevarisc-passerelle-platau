@@ -30,8 +30,8 @@ abstract class PlatauAbstract
         // Gestion des options de configuration.
         // (OptionsResolver allows to create an options system with required options, defaults, validation (type, value), normalization and more)
         $resolver = new OptionsResolver();
-        $resolver->setDefaults(['PLATAU_URL' => self::PLATAU_URL, 'PISTE_ACCESS_TOKEN_URL' => self::PISTE_ACCESS_TOKEN_URL]);
-        $resolver->setRequired(['PISTE_CLIENT_ID', 'PISTE_CLIENT_SECRET', 'PLATAU_ID_ACTEUR_APPELANT']);
+        $resolver->setDefaults(['PLATAU_URL' => self::PLATAU_URL, 'PISTE_ACCESS_TOKEN_URL' => self::PISTE_ACCESS_TOKEN_URL, 'PLATAU_ID_ACTEUR_APPELANT' => null]);
+        $resolver->setRequired(['PISTE_CLIENT_ID', 'PISTE_CLIENT_SECRET']);
         $this->config = $resolver->resolve($config);
 
         // Initialisation du pipeline HTTP utilisé par Guzzle
@@ -43,16 +43,19 @@ abstract class PlatauAbstract
             'client_secret' => $this->getConfig()['PISTE_CLIENT_SECRET'],
         ])));
 
+        // Gestion des entêtes HTTP et définition de l'id acteur appelant (si il existe dans la config)
+        $headers = ['Content-Type' => 'application/json'];
+        if(null !== $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT']) {
+            $headers += ['Id-Acteur-Appelant' => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT']];
+        }
+
         // Création du client HTTP servant à communiquer avec Plat'AU
         $this->http_client = new HttpClient([
             'base_uri' => $this->getConfig()['PLATAU_URL'],
             'timeout'  => 30.0,
             'handler'  => $stack,
             'auth'     => 'oauth',
-            'headers'  => [
-                'Id-Acteur-Appelant' => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
-                'Content-Type'       => 'application/json',
-            ],
+            'headers'  => $headers,
         ]);
     }
 
