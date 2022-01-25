@@ -297,7 +297,7 @@ class Prevarisc
             ])->execute();
 
             // Stockage de la pièce jointe
-            $this->filesystem->write("$piece_jointe_id.$extension", $file_contents);
+            $this->filesystem->write($piece_jointe_id . $extension, $file_contents);
 
             // On commit les changements
             $this->db->commit();
