@@ -69,6 +69,9 @@ abstract class PlatauAbstract
      */
     public function request(string $method, $uri = '', array $options = []) : ResponseInterface
     {
+        // Suppression du leading slash car cela peut rentrer en conflit avec la base uri
+        $uri = ltrim($uri, '/');
+
         return $this->http_client->request($method, $uri, $options);
     }
 }
