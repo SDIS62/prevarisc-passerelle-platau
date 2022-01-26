@@ -2,9 +2,11 @@
 
 namespace App\Service;
 
+use Exception;
 use GuzzleHttp\Client as HttpClient;
 use kamermans\OAuth2\OAuth2Middleware;
 use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\HandlerStack as HttpPipeline;
 use kamermans\OAuth2\GrantType\ClientCredentials;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -75,6 +77,12 @@ abstract class PlatauAbstract
         // Suppression du leading slash car cela peut rentrer en conflit avec la base uri
         $uri = ltrim($uri, '/');
 
-        return $this->http_client->request($method, $uri, $options);
+        // On tente d'envoyer la requête sur Plat'AU
+        try {
+            return $this->http_client->request($method, $uri, $options);
+        }
+        catch(ServerException $server_exception) {
+            throw new Exception($server_exception->getResponse()->getBody()->getContents());
+        }
     }
 }
