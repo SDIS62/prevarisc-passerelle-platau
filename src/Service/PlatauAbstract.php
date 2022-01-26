@@ -2,6 +2,9 @@
 
 namespace App\Service;
 
+use GuzzleHttp\Utils;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Client as HttpClient;
 use kamermans\OAuth2\OAuth2Middleware;
 use Psr\Http\Message\ResponseInterface;
@@ -35,7 +38,16 @@ abstract class PlatauAbstract
         $this->config = $resolver->resolve($config);
 
         // Initialisation du pipeline HTTP utilisé par Guzzle
-        $stack = HttpPipeline::create();
+        $stack = new HttpPipeline(Utils::chooseHandler());
+
+        // Personnalisation du middleware de gestion d'erreur (permettant d'éviter de tronquer les messages d'erreur
+        // renvoyés par Plat'AU)
+        $stack->push(Middleware::httpErrors(new BodySummarizer(16384)), 'http_errors');
+
+        // Middlewares par défaut
+        $stack->push(Middleware::redirect(), 'allow_redirects');
+        $stack->push(Middleware::cookies(), 'cookies');
+        $stack->push(Middleware::prepareBody(), 'prepare_body');
 
         // Middleware : OAuth2 auth (https://developer.aife.economie.gouv.fr)
         $stack->push(new OAuth2Middleware(new ClientCredentials(new HttpClient(['base_uri' => $this->getConfig()['PISTE_ACCESS_TOKEN_URL']]), [
