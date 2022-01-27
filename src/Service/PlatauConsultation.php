@@ -109,7 +109,6 @@ final class PlatauConsultation extends PlatauAbstract
                             'idConsultation' => $consultation_id,
                             'noVersion'      => $consultation['noVersion'],
                             'pecMetier'      => [
-                                'boIntentionDePrescrire' => false,
                                 'dtPecMetier'            => (new Datetime())->format('Y-m-d'),
                                 'dtLimiteReponse'        => (new Datetime())->add($date_limite_reponse_interval)->format('Y-m-d'),
                                 'idActeurEmetteur'       => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
