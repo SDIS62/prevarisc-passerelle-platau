@@ -45,7 +45,7 @@ class Prevarisc
 
         // Si la requête vers la base de donnée n'a rien donné, alors on lève une exception.
         if (empty($dossier)) {
-            throw new Exception("La consultation n'existe pas dans Prevarisc.");
+            throw new Exception("La consultation $consultation_id n'existe pas dans Prevarisc.");
         }
 
         return $dossier;
