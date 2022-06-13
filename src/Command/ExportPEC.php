@@ -47,7 +47,7 @@ final class ExportPEC extends Command
             $consultations_en_attente_de_pec = [$this->consultation_service->getConsultation($input->getOption('consultation-id'))];
         } else {
             $output->writeln('Recherche de consultations en attente de prise en compte métier ...');
-            $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
+            $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [1]]);
         }
 
         // Si une DLR personnalisée est demandée par l'utilisateur

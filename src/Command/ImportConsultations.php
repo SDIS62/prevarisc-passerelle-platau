@@ -43,7 +43,7 @@ final class ImportConsultations extends Command
     {
         // Récupération des consultations dans un état Versée (c'est à dire Non Traitée)
         $output->writeln('Récupération des consultations versées  ...');
-        $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
+        $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [1]]);
 
         // Si il n'existe pas de consultations, on arrête le travail ici
         if (empty($consultations)) {
