@@ -3,11 +3,14 @@
 namespace App\Service;
 
 use GuzzleHttp\Utils;
+use Pagerfanta\Pagerfanta;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\RequestException;
 use kamermans\OAuth2\OAuth2Middleware;
 use Psr\Http\Message\ResponseInterface;
+use Pagerfanta\Adapter\CallbackAdapter;
 use GuzzleHttp\HandlerStack as HttpPipeline;
 use kamermans\OAuth2\GrantType\ClientCredentials;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -88,5 +91,43 @@ abstract class PlatauAbstract
         $uri = ltrim($uri, '/');
 
         return $this->http_client->request($method, $uri, $options);
+    }
+
+    /**
+     * Traitement de la pagination Plat'AU
+     */
+    protected function pagination(string $method, $uri = '', array $options = []) : Pagerfanta
+    {
+        $adapter = new CallbackAdapter(
+            // A callable to count the number items in the list
+            function () use ($method, $uri, $options) : int {
+                $max_per_page = 500; // Hard-coded dans Plat'AU
+                $premiere_page = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => 0]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                \assert(array_key_exists('nombrePages', $premiere_page) && array_key_exists('resultats', $premiere_page) && is_array($premiere_page['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
+                if($premiere_page['nombrePages'] === 0) { // La première page pour Plat'AU est le numéro ... 0 (erf ...)
+                    return count($premiere_page['resultats']);
+                }
+                $total_sans_la_derniere_page = $max_per_page * ($premiere_page['nombrePages'] - 1);
+                $derniere_page = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => $premiere_page['nombrePages'] - 1]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                \assert(array_key_exists('nombrePages', $derniere_page) && array_key_exists('resultats', $derniere_page) && is_array($derniere_page['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
+                return $total_sans_la_derniere_page + count($derniere_page['resultats']);
+            },
+            // A callable to get the items for the current page in the paginated list
+            function (int $offset, int $length) use ($method, $uri, $options) : iterable {
+                $max_per_page = 500; // Hard-coded dans Plat'AU
+                $results = [];
+                $page_debut = (int) floor($offset / $max_per_page);
+                $page_fin = $page_debut + (int) floor(($offset + $length - 1) / $max_per_page);
+                for($page = $page_debut; $page <= $page_fin; $page++) {
+                    $response = $this->request($method, $uri, ['query' => ['numeroPage' => $page]] + $options);
+                    $json = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                    \assert(array_key_exists('resultats', $json) && is_array($json['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
+                    $results = $results + $json['resultats'];
+                }
+                return array_slice($results, $offset % $max_per_page, $length);
+            }
+        );
+
+        return new Pagerfanta($adapter);
     }
 }
