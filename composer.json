@@ -9,7 +9,8 @@
         "symfony/console": "^5.2",
         "doctrine/dbal": "^3.0",
         "league/flysystem": "^2.0",
-        "symfony/options-resolver": "^5.2"
+        "symfony/options-resolver": "^5.2",
+        "pagerfanta/pagerfanta": "^3.6"
     },
     "require-dev": {
         "kdubuc/php-cs-fixer-rules": "^1.0"

@@ -49,11 +49,11 @@ final class ImportPieces extends Command
         // Si le flag --force-non-pec est ajouté par l'utilisateur, on récupère TOUTES les consultations versées
         if ($input->getOption('force-non-pec')) {
             $output->writeln('Recherche de toutes les consultations versées (--force-non-pec) ...');
-            $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 1]);
+            $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [1]]);
         }
         else {
             $output->writeln('Recherche de toutes les consultations en attente d\'avis ...');
-            $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => 3]);
+            $consultations = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [3]]);
         }
         
 

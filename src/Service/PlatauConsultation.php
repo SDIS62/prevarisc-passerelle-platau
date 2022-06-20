@@ -14,18 +14,10 @@ final class PlatauConsultation extends PlatauAbstract
     public function rechercheConsultations(array $params = []) : array
     {
         // On recherche la consultation en fonction des critères de recherche
-        $response = $this->request('post', 'consultations/recherche', ['json' => ['criteresSurConsultations' => $params]]);
-
-        // On vient récupérer les consultations qui nous interesse dans la réponse des résultats de recherche
-        $consultations = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
-
-        // Le résultat de la recherche doit donner un tableau, sinon, il y a un problème quelque part ...
-        if (!\is_array($consultations)) {
-            throw new Exception('Un problème a eu lieu dans la récupération des résultats de recherche de consultations');
-        }
+        $consultations = $this->pagination('post', 'consultations/recherche', ['json' => ['criteresSurConsultations' => $params]]);
 
         // On parse l'ensemble des consultations de la recherche
-        $consultations = array_map(fn ($consultation) => $this->parseConsultation($consultation), $consultations);
+        $consultations = array_map(fn ($consultation) => $this->parseConsultation($consultation), (array) $consultations->getCurrentPageResults());
 
         return $consultations;
     }
@@ -129,7 +121,7 @@ final class PlatauConsultation extends PlatauAbstract
     public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = []) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée
-        $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => 3]);
+        $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3]]);
 
         // Création du texte formulant l'avis
         $description = vsprintf('Avis Prevarisc. Prescriptions données : %s', [
