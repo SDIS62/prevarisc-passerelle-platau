@@ -229,7 +229,7 @@ class Prevarisc
     public function pieceJointeExisteDansDossier(int $dossier_id, string $filename) : bool
     {
         $query_builder = $this->db->createQueryBuilder();
-        
+
         // Recherche de la pièce jointe dans un dossier Prevarisc
         $piece_jointe = $query_builder
             ->select('piecejointe.ID_PIECEJOINTE')
@@ -257,7 +257,7 @@ class Prevarisc
         $filename = vsprintf('PLATAU-%s-%s-v%d', [$piece['idPiece'], $piece['noPiece'], $piece['noVersion']]);
 
         // Si le fichier existe déjà, on ne l'importe pas
-        if($this->pieceJointeExisteDansDossier($dossier_id, $filename)) {
+        if ($this->pieceJointeExisteDansDossier($dossier_id, $filename)) {
             return;
         }
 
@@ -272,7 +272,7 @@ class Prevarisc
         ]);
 
         // Ajout d'un point avant l'extension
-        $extension = '.' . $extension;
+        $extension = '.'.$extension;
 
         // On démarre une transaction SQL. Si jamais les choses se passent mal, on pourra revenir en arrière.
         $this->db->beginTransaction();
@@ -297,7 +297,7 @@ class Prevarisc
             ])->execute();
 
             // Stockage de la pièce jointe
-            $this->filesystem->write($piece_jointe_id . $extension, $file_contents);
+            $this->filesystem->write($piece_jointe_id.$extension, $file_contents);
 
             // On commit les changements
             $this->db->commit();

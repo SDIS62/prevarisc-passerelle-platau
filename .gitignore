@@ -2,3 +2,4 @@
 vendor
 tests
 .DS_Store
+.php-cs-fixer.cache

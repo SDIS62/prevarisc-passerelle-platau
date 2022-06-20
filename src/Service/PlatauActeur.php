@@ -61,7 +61,7 @@ final class PlatauActeur extends PlatauAbstract
         }
 
         // Récupération de l'acteur recherché
-        $data = (array) $acteurs->getCurrentPageResults();
+        $data   = (array) $acteurs->getCurrentPageResults();
         $acteur = array_shift($data);
 
         return $acteur;
