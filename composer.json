@@ -7,7 +7,7 @@
         "kamermans/guzzle-oauth2-subscriber": "^1.0",
         "uma/dic": "^1.0",
         "symfony/console": "^5.2",
-        "doctrine/dbal": "^3.0",
+        "doctrine/dbal": "~3.2.0",
         "league/flysystem": "^2.0",
         "symfony/options-resolver": "^5.2",
         "pagerfanta/pagerfanta": "^3.6"
