@@ -47,7 +47,7 @@ final class ExportAvis extends Command
             $output->writeln('Recherche de toutes les consultations en attente d\'avis ...');
             $consultations_en_attente_davis = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [3]]);
         }
-        
+
         // Si il n'existe pas de consultations en attente d'avis, on arrête le travail ici
         if (empty($consultations_en_attente_davis)) {
             $output->writeln('Pas de consultations en attente d\'avis.');
