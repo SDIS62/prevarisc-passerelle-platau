@@ -41,9 +41,9 @@ final class PlatauPiece extends PlatauAbstract
         $extension_regex   = "/filename[^;=\n]*=(?'filename'(['\"]).*?\2|[^;\n.]*).(?'extension'\w*)/";
         $extension_matches = [];
         preg_match($extension_regex, $content_disposition_header, $extension_matches, \PREG_UNMATCHED_AS_NULL);
-        
+
         // Si aucune extension n'est trouvée, on retourne null
-        if(!array_key_exists('extension', $extension_matches)) {
+        if (!\array_key_exists('extension', $extension_matches)) {
             return null;
         }
 
