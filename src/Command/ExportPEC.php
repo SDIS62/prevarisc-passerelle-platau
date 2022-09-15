@@ -67,11 +67,11 @@ final class ExportPEC extends Command
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
-                if ('1' === $dossier['INCOMPLET_DOSSIER']) {
+                if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
                     $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse);
                     $output->writeln('Notification de la Prise En Compte Négative envoyée !');
-                } elseif ('0' === $dossier['INCOMPLET_DOSSIER']) {
+                } elseif ('0' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
                     $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse);
                     $output->writeln('Notification de la Prise En Compte Positive envoyée !');
