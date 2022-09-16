@@ -69,11 +69,12 @@ final class ExportAvis extends Command
                 $prescriptions = $this->prevarisc_service->getPrescriptions($dossier['ID_DOSSIER']);
 
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
-                if ('1' === $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === $dossier['AVIS_DOSSIER_COMMISSION']) {
+                if ('1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === (string) $dossier['AVIS_DOSSIER_COMMISSION']) {
                     // On verse l'avis de commission dans Plat'AU
                     // Pour rappel, un avis de commission à 1 = favorable, 2 = défavorable.
-                    $output->writeln("Versement d'un avis ".('1' === $dossier['AVIS_DOSSIER_COMMISSION'] ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->versementAvis($consultation_id, '1' === $dossier['AVIS_DOSSIER_COMMISSION'], $prescriptions);
+                    $est_favorable = '1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'];
+                    $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
+                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions);
                     $output->writeln('Avis envoyé !');
                 } else {
                     $output->writeln("Impossible d'envoyer un avis pour la consultation $consultation_id pour le moment (en attente de l'avis de commission dans Prevarisc) ...");
