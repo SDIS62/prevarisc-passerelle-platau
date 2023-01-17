@@ -19,6 +19,9 @@ abstract class PlatauAbstract
     public const PLATAU_URL             = 'https://api.aife.economie.gouv.fr/mtes/platau/v8/';
     public const PISTE_ACCESS_TOKEN_URL = 'https://oauth.aife.economie.gouv.fr/api/oauth/token';
 
+    private HttpClient $http_client;
+    private array $config;
+
     /**
      * Création d'une nouvelle instance d'un service Platau.
      * La configuration doit contenir au moins :
