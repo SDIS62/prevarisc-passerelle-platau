@@ -7,7 +7,9 @@ use GuzzleHttp\Middleware;
 use Pagerfanta\Pagerfanta;
 use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleRetry\GuzzleRetryMiddleware;
 use kamermans\OAuth2\OAuth2Middleware;
+use Psr\Http\Message\RequestInterface;
 use Pagerfanta\Adapter\CallbackAdapter;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\HandlerStack as HttpPipeline;
@@ -18,6 +20,9 @@ abstract class PlatauAbstract
 {
     public const PLATAU_URL             = 'https://api.aife.economie.gouv.fr/mtes/platau/v8/';
     public const PISTE_ACCESS_TOKEN_URL = 'https://oauth.aife.economie.gouv.fr/api/oauth/token';
+
+    private HttpClient $http_client;
+    private array $config;
 
     /**
      * Création d'une nouvelle instance d'un service Platau.
@@ -41,6 +46,23 @@ abstract class PlatauAbstract
 
         // Initialisation du pipeline HTTP utilisé par Guzzle
         $stack = new HttpPipeline(Utils::chooseHandler());
+
+        // Retry statregy : on va demander au client Plat'AU d'essayer plusieurs fois une requête qui pose problème
+        // afin d'éviter de tomber à cause d'un problème de connexion ponctuel (exemple : Connection refused for URI)
+        $stack->push(GuzzleRetryMiddleware::factory([
+            'max_retry_attempts' => 5,
+            'retry_on_status'    => [429, 503, 500],
+            'on_retry_callback'  => function (int $attemptNumber, float $delay, RequestInterface &$request, array &$options, ?ResponseInterface $response) {
+                $message = sprintf(
+                    "Un problème est survenu lors de la requête à %s : Plat'AU a répondu avec un code %s. Nous allons attendre %s secondes avant de réessayer. Ceci est l'essai numéro %s.",
+                    $request->getUri()->getPath(),
+                    $response->getStatusCode(),
+                    number_format($delay, 2),
+                    $attemptNumber
+                );
+                echo $message.\PHP_EOL;
+            },
+        ]));
 
         // Personnalisation du middleware de gestion d'erreur (permettant d'éviter de tronquer les messages d'erreur
         // renvoyés par Plat'AU)

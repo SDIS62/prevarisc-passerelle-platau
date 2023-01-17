@@ -21,11 +21,13 @@ final class Platau implements ServiceProvider
      */
     public function provide(Container $container) : void
     {
+        $client = new Service\PlatauClient($this->config);
+
         // Création des services Plat'AU
-        $container->set('service.platau.consultation', new Service\PlatauConsultation($this->config));
-        $container->set('service.platau.notification', new Service\PlatauNotification($this->config));
-        $container->set('service.platau.acteur', new Service\PlatauActeur($this->config));
-        $container->set('service.platau.piece', new Service\PlatauPiece($this->config));
-        $container->set('service.platau.healthcheck', new Service\PlatauHealthcheck($this->config));
+        $container->set('service.platau.consultation', fn () => $client->consultations);
+        $container->set('service.platau.notification', fn () => $client->notifications);
+        $container->set('service.platau.acteur', fn () => $client->acteurs);
+        $container->set('service.platau.piece', fn () => $client->pieces);
+        $container->set('service.platau.healthcheck', fn () => $client->healthcheck);
     }
 }

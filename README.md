@@ -16,6 +16,19 @@ Cette connexion est matérialisée par une passerelle permettant d'automatiser l
 * Envoi de notifications à Plat'AU de la bonne prise en compte de la consultation ;
 * Communique les avis de la commission de sécurité automatiquement vers Plat'AU.
 
+### Compatibilité avec les versions Plat'AU
+
+Nous avons aligné les numéros de versions majeures de la passerelle avec celles de Plat'AU.
+
+Par exemple :
+- sdis62/prevarisc-passerelle-platau v8.x et Plat'AU v8.x sont compatibles
+- sdis62/prevarisc-passerelle-platau v9.x et Plat'AU v9.x sont compatibles
+- sdis62/prevarisc-passerelle-platau v10.x et Plat'AU v10.x sont compatibles
+
+Ainsi de suite ...
+
+> Ps : Les numéros de versions mineures et patches représentés par des x n'ont pas besoin d'être identiques, seule la version majeure compte.
+
 ## Documentation
 
 ### Installation

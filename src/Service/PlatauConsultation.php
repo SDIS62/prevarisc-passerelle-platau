@@ -75,7 +75,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null, string $observations = null) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -107,6 +107,7 @@ final class PlatauConsultation extends PlatauAbstract
                                 'dtLimiteReponse'        => (new Datetime())->add($date_limite_reponse_interval)->format('Y-m-d'),
                                 'idActeurEmetteur'       => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
                                 'nomStatutPecMetier'     => $est_positive ? 1 : 2,
+                                'txObservations'         => (string) $observations,
                             ],
                         ],
                     ],
