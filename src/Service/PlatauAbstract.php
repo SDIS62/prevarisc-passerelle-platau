@@ -116,32 +116,58 @@ abstract class PlatauAbstract
 
     /**
      * Traitement de la pagination Plat'AU.
+     *
+     * Attention, le système de pagination est inconsistant dans Plat'AU. Certains endpoints prennent
+     * en charge un numéro de page et une limite d'éléments retournés, la recherche des notifications
+     * fonctionne grâce à un système de curseur, et d'autres ne fonctionnent qu'avec un numéro de page
+     * avec un nombre d'éléments fixés et non modifiable. (ps : d'ailleurs, l'API Plat'AU crash dès qu'un endpoint
+     * pagniné avec un nombre d'éléments fixés retourne trop d'éléments, cela fait planter leur base de données MongoDB,
+     * voir https://github.com/SDIS62/prevarisc-passerelle-platau/issues/41).
+     *
+     * Les endpoints qui supportent complètement la pagination sont :
+     *   - /propositionsDecisionsUrba/recherche
+     *   - /livraisonNumerisation/recherche
+     *   - /declarationsOuvertureChantier/recherche
+     *   - /declarationsAchevementTravaux/recherche
+     *   - /lettresAuxPetitionnaires/recherche
+     *   - /consultations/recherche
+     *   - /dossiers/recherche
      */
     protected function pagination(string $method, $uri = '', array $options = []) : Pagerfanta
     {
         $adapter = new CallbackAdapter(
             // A callable to count the number items in the list
             function () use ($method, $uri, $options) : int {
-                $max_per_page  = 500; // Hard-coded dans Plat'AU
-                $premiere_page = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => 0]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                // On va donner un nbElementsParPage à 100 par défaut, pour éviter de faire crash Plat'AU. Mais nous vérifierons quand même
+                // le nombre de résultats que Plat'AU nous renverra car nbElementsParPage est inconsistant en fonction des endpoints
+                // paginés.
+                $premiere_page = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => 0, 'nbElementsParPage' => 100]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
                 \assert(\array_key_exists('nombrePages', $premiere_page) && \array_key_exists('resultats', $premiere_page) && \is_array($premiere_page['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
-                if (0 === $premiere_page['nombrePages']) { // La première page pour Plat'AU est le numéro ... 0 (erf ...)
+                if (0 === $premiere_page['nombrePages']) { // La première page pour Plat'AU est la page numéro ... 0 (erf ...)
                     return \count($premiere_page['resultats']);
                 }
-                $total_sans_la_derniere_page = $max_per_page * ($premiere_page['nombrePages'] - 1);
-                $derniere_page               = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => $premiere_page['nombrePages'] - 1]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                $total_sans_la_derniere_page = \count($premiere_page['resultats']) * ($premiere_page['nombrePages'] - 1);
+                $derniere_page               = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => $premiere_page['nombrePages'] - 1, 'nbElementsParPage' => 100]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
                 \assert(\array_key_exists('nombrePages', $derniere_page) && \array_key_exists('resultats', $derniere_page) && \is_array($derniere_page['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
 
                 return $total_sans_la_derniere_page + \count($derniere_page['resultats']);
             },
             // A callable to get the items for the current page in the paginated list
             function (int $offset, int $length) use ($method, $uri, $options) : iterable {
-                $max_per_page = 500; // Hard-coded dans Plat'AU
+                $max_per_page = \in_array(ltrim($uri, '/'), [
+                    'propositionsDecisionsUrba/recherche',
+                    'livraisonNumerisation/recherche',
+                    'declarationsOuvertureChantier/recherche',
+                    'declarationsAchevementTravaux/recherche',
+                    'lettresAuxPetitionnaires/recherche',
+                    'consultations/recherche',
+                    'dossiers/recherche',
+                ]) ? $length : 500;
                 $results      = [];
                 $page_debut   = (int) floor($offset / $max_per_page);
-                $page_fin     = $page_debut + (int) floor(($offset + $length - 1) / $max_per_page);
+                $page_fin     = (int) floor(($offset + $length - 1) / $max_per_page);
                 for ($page = $page_debut; $page <= $page_fin; ++$page) {
-                    $response = $this->request($method, $uri, ['query' => ['numeroPage' => $page]] + $options);
+                    $response = $this->request($method, $uri, ['query' => ['numeroPage' => $page, 'nbElementsParPage' => $max_per_page]] + $options);
                     $json     = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
                     \assert(\array_key_exists('resultats', $json) && \is_array($json['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
                     $results = $results + $json['resultats'];
