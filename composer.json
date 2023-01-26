@@ -11,7 +11,8 @@
         "league/flysystem": "^2.0",
         "symfony/options-resolver": "^5.2",
         "pagerfanta/pagerfanta": "^3.6",
-        "caseyamcl/guzzle_retry_middleware": "^2.8"
+        "caseyamcl/guzzle_retry_middleware": "^2.8",
+        "adbario/php-dot-notation": "^3.2"
     },
     "require-dev": {
         "kdubuc/php-cs-fixer-rules": "^1.0"
