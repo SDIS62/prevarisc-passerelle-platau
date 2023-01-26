@@ -133,7 +133,7 @@ abstract class PlatauAbstract
      *   - /consultations/recherche
      *   - /dossiers/recherche
      */
-    protected function pagination(string $method, $uri = '', array $options = []) : Pagerfanta
+    protected function pagination(string $method, string $uri = '', array $options = []) : Pagerfanta
     {
         $adapter = new CallbackAdapter(
             // A callable to count the number items in the list
@@ -141,13 +141,13 @@ abstract class PlatauAbstract
                 // On va donner un nbElementsParPage à 100 par défaut, pour éviter de faire crash Plat'AU. Mais nous vérifierons quand même
                 // le nombre de résultats que Plat'AU nous renverra car nbElementsParPage est inconsistant en fonction des endpoints
                 // paginés.
-                $premiere_page = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => 0, 'nbElementsParPage' => 100]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                $premiere_page = json_decode($this->request($method, $uri, array_merge_recursive($options, ['query' => ['numeroPage' => 0, 'nbElementsParPage' => 100]]))->getBody(), true, 512, \JSON_THROW_ON_ERROR);
                 \assert(\array_key_exists('nombrePages', $premiere_page) && \array_key_exists('resultats', $premiere_page) && \is_array($premiere_page['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
                 if (0 === $premiere_page['nombrePages']) { // La première page pour Plat'AU est la page numéro ... 0 (erf ...)
                     return \count($premiere_page['resultats']);
                 }
                 $total_sans_la_derniere_page = \count($premiere_page['resultats']) * ($premiere_page['nombrePages'] - 1);
-                $derniere_page               = json_decode($this->request($method, $uri, ['query' => ['numeroPage' => $premiere_page['nombrePages'] - 1, 'nbElementsParPage' => 100]] + $options)->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+                $derniere_page               = json_decode($this->request($method, $uri, array_merge_recursive($options, ['query' => ['numeroPage' => $premiere_page['nombrePages'] - 1, 'nbElementsParPage' => 100]]))->getBody(), true, 512, \JSON_THROW_ON_ERROR);
                 \assert(\array_key_exists('nombrePages', $derniere_page) && \array_key_exists('resultats', $derniere_page) && \is_array($derniere_page['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
 
                 return $total_sans_la_derniere_page + \count($derniere_page['resultats']);
@@ -167,7 +167,7 @@ abstract class PlatauAbstract
                 $page_debut   = (int) floor($offset / $max_per_page);
                 $page_fin     = (int) floor(($offset + $length - 1) / $max_per_page);
                 for ($page = $page_debut; $page <= $page_fin; ++$page) {
-                    $response = $this->request($method, $uri, ['query' => ['numeroPage' => $page, 'nbElementsParPage' => $max_per_page]] + $options);
+                    $response = $this->request($method, $uri, array_merge_recursive($options, ['query' => ['numeroPage' => $page, 'nbElementsParPage' => $max_per_page]]));
                     $json     = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
                     \assert(\array_key_exists('resultats', $json) && \is_array($json['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
                     $results = $results + $json['resultats'];
