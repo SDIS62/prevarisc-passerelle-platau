@@ -2,11 +2,60 @@
 
 namespace App\Service;
 
+use DateTime;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface;
 
 final class PlatauPiece extends PlatauAbstract
 {
+    /**
+     * Associe un fichier hébergé sur une instance syncplicity à une pièce Plat'AU.
+     */
+    public function ajouterPieceDepuisFichierSyncplicity(
+        string $numero,
+        string $dossier_id,
+        string $version_no,
+        string $nature,
+        string $type,
+        string $syncplicity_file_id,
+        string $syncplicity_folder_id,
+        string $file_hash_sha512 = null
+    ) : array {
+        // On formatte la pièce Plat'AU
+        $piece = [
+            'noPiece'         => $numero,
+            'nomNaturePiece'  => $nature, // Nomenclature NATURE_PIECE
+            'nomTypePiece'    => $type, // Nomenclature TYPE_PIECE
+            'fileId'          => $syncplicity_file_id,
+            'folderId'        => $syncplicity_folder_id,
+            'dtProduction'    => (new DateTime())->format('Y-m-d'),
+        ];
+
+        // Si le hash du fichier correspondant à la pièce est donné, on l'envoie à Plat'AU pour qu'il
+        // s'assure que le fichier correspond bien
+        if (null !== $file_hash_sha512) {
+            $piece += [
+                'algoHash' => 'SHA-512',
+                'hash'     => $file_hash_sha512,
+            ];
+        }
+
+        // Verse les informations relatives aux pièces constitutives d'un dossier
+        $response = $this->request('POST', 'pieces', [
+            'json' => [
+                [
+                    'idDossier' => $dossier_id,
+                    'noVersion' => $version_no,
+                    'pieces'    => [$piece],
+                ],
+            ],
+        ]);
+
+        $piece = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+
+        return $piece;
+    }
+
     /*
      * Télécharge un document
      */
