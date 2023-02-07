@@ -10,6 +10,10 @@ use Doctrine\DBAL\Schema\Column;
 
 class Prevarisc
 {
+    private Connection $db;
+    private int $user_platau_id;
+    private Flysystem\Filesystem $filesystem;
+
     /**
      * Construction du service Prevarisc en lui donnant une connexion SQL.
      */
@@ -73,6 +77,7 @@ class Prevarisc
         return $this->db->connect();
     }
 
+    // TODO Ajouter la présence de la table piecejointestatut
     /**
      * Vérifie que la base de données Prevarisc est compatible avec les importations de consultations Plat'AU.
      */
@@ -305,6 +310,37 @@ class Prevarisc
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Récupère les pièces jointes avec un statut d'envoi vers Plat'AU spécifique.
+     */
+    public function recupererPiecesAvecStatut(string $status) : array
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $query = $query_builder
+            ->select('pj.ID_PIECEJOINTE', 'pj.EXTENSION_PIECEJOINTE', 'd.ID_PLATAU')
+            ->from('piecejointe', 'pj')
+            ->leftJoin('pj', 'piecejointestatut', 'pjs', 'pjs.ID_PIECEJOINTESTATUT = pj.ID_PIECEJOINTESTATUT')
+            ->join('pj', 'dossierpj', 'dpj', 'dpj.ID_PIECEJOINTE = pj.ID_PIECEJOINTE')
+            ->join('dpj', 'dossier', 'd', 'd.ID_DOSSIER = dpj.ID_DOSSIER')
+            ->where(
+                $query_builder->expr()->eq('pjs.NOM_STATUT', '?')
+            )
+            ->setParameter(0, $status)
+            ->executeQuery()
+        ;
+
+        return $query->fetchAllAssociative();
+    }
+
+    /**
+     * Récupère la pièce jointe sur le serveur.
+     */
+    public function recupererFichierPhysique(int $piece_jointe_id, string $piece_jointe_extension) : string
+    {
+        return $this->filesystem->read("${piece_jointe_id}${piece_jointe_extension}");
     }
 
     /**

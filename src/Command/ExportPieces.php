@@ -46,26 +46,32 @@ final class ExportPieces extends Command
             return Command::FAILURE;
         }
 
-        $file_contents = '';
+        $filesToExport = $this->prevarisc_service->recupererPiecesAvecStatut('to_be_exported');
 
-        $file = $this->syncplicity_client->upload($file_contents);
+        array_map(function ($db_value) {
+            $file_contents = $this->prevarisc_service->recupererFichierPhysique($db_value['ID_PIECEJOINTE'], $db_value['EXTENSION_PIECEJOINTE']);
 
-        \assert(\array_key_exists('data_file_id', $file));
-        $syncplicity_file_id = $file['data_file_id'];
+            $file = $this->syncplicity_client->upload($file_contents);
 
-        \assert(\array_key_exists('VirtualFolderId', $file));
-        $syncplicity_folder_id = $file['VirtualFolderId'];
+            \assert(\array_key_exists('data_file_id', $file));
+            $syncplicity_file_id = $file['data_file_id'];
 
-        $this->piece_service->ajouterPieceDepuisFichierSyncplicity(
-            '',
-            '',
-            '',
-            '',
-            '',
-            $syncplicity_file_id,
-            $syncplicity_folder_id,
-            hash('sha512', $file_contents)
-        );
+            \assert(\array_key_exists('VirtualFolderId', $file));
+            $syncplicity_folder_id = $file['VirtualFolderId'];
+
+            $dossier_id = $db_value['ID_PLATAU'];
+
+            $this->piece_service->ajouterPieceDepuisFichierSyncplicity(
+                '',
+                $dossier_id,
+                '',
+                '',
+                '',
+                $syncplicity_file_id,
+                $syncplicity_folder_id,
+                hash('sha512', $file_contents)
+            );
+        }, $filesToExport);
 
         return Command::SUCCESS;
     }
