@@ -320,7 +320,7 @@ class Prevarisc
         $query_builder = $this->db->createQueryBuilder();
 
         $query = $query_builder
-            ->select('pj.ID_PIECEJOINTE', 'pj.EXTENSION_PIECEJOINTE', 'd.ID_PLATAU')
+            ->select('pj.ID_PIECEJOINTE', 'pj.EXTENSION_PIECEJOINTE', 'pj.NOM_PIECEJOINTE', 'd.ID_PLATAU')
             ->from('piecejointe', 'pj')
             ->leftJoin('pj', 'piecejointestatut', 'pjs', 'pjs.ID_PIECEJOINTESTATUT = pj.ID_PIECEJOINTESTATUT')
             ->join('pj', 'dossierpj', 'dpj', 'dpj.ID_PIECEJOINTE = pj.ID_PIECEJOINTE')

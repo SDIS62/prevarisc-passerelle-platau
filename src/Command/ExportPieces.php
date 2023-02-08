@@ -10,6 +10,7 @@ use App\Service\PlatauPiece as PlatauPieceService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use App\Service\PlatauConsultation as PlatauConsultationService;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class ExportPieces extends Command
 {
@@ -40,17 +41,27 @@ final class ExportPieces extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
-        if (null === $this->syncplicity_client) {
-            $output->writeln("Impossible d'utiliser export-pieces sans l'activation du service syncplicity");
+        $command_style = new SymfonyStyle($input, $output);
+        $command_style->title('Export des pièces');
 
+        if (null === $this->syncplicity_client) {
+            $command_style->error("Impossible d'utiliser {$this->getName()} sans l'activation du service syncplicity");
+            
             return Command::FAILURE;
         }
 
-        $filesToExport = $this->prevarisc_service->recupererPiecesAvecStatut('to_be_exported');
+        $files_to_export = $this->prevarisc_service->recupererPiecesAvecStatut('to_be_exported');
 
-        array_map(function ($db_value) {
+        if (0 === count($files_to_export)) {
+            $command_style->info("Aucune pièce à téléverser");
+
+            return Command::SUCCESS;
+        }
+
+        array_map(function ($db_value) use ($command_style) {
             $file_contents = $this->prevarisc_service->recupererFichierPhysique($db_value['ID_PIECEJOINTE'], $db_value['EXTENSION_PIECEJOINTE']);
 
+            $command_style->text(sprintf("Téléversement de la pièce \"%s%s\"", $db_value['NOM_PIECEJOINTE'], $db_value['EXTENSION_PIECEJOINTE']));
             $file = $this->syncplicity_client->upload($file_contents);
 
             \assert(\array_key_exists('data_file_id', $file));
@@ -71,7 +82,9 @@ final class ExportPieces extends Command
                 $syncplicity_folder_id,
                 hash('sha512', $file_contents)
             );
-        }, $filesToExport);
+        }, $files_to_export);
+
+        $command_style->success("Les pièces ont correctement été téléversées");
 
         return Command::SUCCESS;
     }
