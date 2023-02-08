@@ -90,7 +90,7 @@ class SyncplicityClient
     public function upload(string $file_contents) : array
     {
         // Si le fichier fait moins de 10mo, alors on lance un upload simple
-        if (mb_strlen($file_contents) < 10 * 10 ** 6) {
+        if ($this->getFileSize($file_contents) < 10 * 10 ** 6) {
             // On lance l'upload
             $response = $this->request('POST', 'upload', [
                 'form_params' => [
@@ -157,5 +157,10 @@ class SyncplicityClient
         return $json + [
             'VirtualFolderId' => $ticket_pre_upload['VirtualFolderId'],
         ];
+    }
+
+    public static function getFileSize(string $file_contents): int
+    {
+        return false === mb_detect_encoding($file_contents, strict: true) ? strlen($file_contents) : mb_strlen($file_contents);
     }
 }
