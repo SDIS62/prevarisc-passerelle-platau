@@ -6,6 +6,13 @@ require_once __DIR__.'/../vendor/autoload.php';
 use App\Console;
 use Symfony\Component\Console\Input\ArgvInput;
 
+// str_starts_with shim for php 7
+if (!function_exists('str_starts_with')) {
+    function str_starts_with($haystack, $needle) {
+        return (string) $needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0;
+    }
+}
+
 // Récupération du chemin vers le fichier de configuration
 $argvInput = new ArgvInput();
 if (!$argvInput->hasParameterOption('--config')) {
