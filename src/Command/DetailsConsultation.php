@@ -12,9 +12,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class DetailsConsultation extends Command
 {
-    public function __construct(
-        private PlatauConsultation $consultation_service
-    ) {
+    private PlatauConsultation $consultation_service;
+
+    public function __construct(PlatauConsultation $consultation_service)
+    {
+        $this->consultation_service = $consultation_service;
         parent::__construct();
     }
 
