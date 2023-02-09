@@ -344,6 +344,35 @@ class Prevarisc
     }
 
     /**
+     * Modifie le statut d'envoi vers Plat'AU de la pièce
+     */
+    public function changerStatutPiece(int $piece_jointe_id, string $status): void
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $id_statut = $query_builder
+            ->select('ID_PIECEJOINTESTATUT')
+            ->from('piecejointestatut')
+            ->where(
+                $query_builder->expr()->eq('NOM_STATUT', '?')
+            )
+            ->setParameter(0, $status)
+            ->executeQuery()
+            ->fetchOne()
+        ;
+
+        $query_builder
+            ->update('piecejointe', 'pj')
+            ->set('ID_PIECEJOINTESTATUT', $id_statut)
+            ->where(
+                $query_builder->expr()->eq('ID_PIECEJOINTE', '?')
+            )
+            ->setParameter(0, $piece_jointe_id)
+            ->executeStatement()
+        ;
+    }
+
+    /**
      * Correspondance entre une nature de dossier PlatAU et Prevarisc.
      * On lui donne un ID PlatAU et il nous ressort un ID Prevarisc.
      * Si l'ID Prevarisc correspondant n'existe pas, la fonction lève une exception.

@@ -10,6 +10,7 @@ use App\Service\PlatauPiece as PlatauPieceService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use App\Service\PlatauConsultation as PlatauConsultationService;
+use Exception;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class ExportPieces extends Command
@@ -58,11 +59,22 @@ final class ExportPieces extends Command
             return Command::SUCCESS;
         }
 
-        array_map(function ($db_value) use ($command_style) {
-            $file_contents = $this->prevarisc_service->recupererFichierPhysique($db_value['ID_PIECEJOINTE'], $db_value['EXTENSION_PIECEJOINTE']);
+        foreach ($files_to_export as $file_to_export) {
+            $file_contents = $this->prevarisc_service->recupererFichierPhysique($file_to_export['ID_PIECEJOINTE'], $file_to_export['EXTENSION_PIECEJOINTE']);
+            $file_name = $file_to_export['NOM_PIECEJOINTE'].$file_to_export['EXTENSION_PIECEJOINTE'];
 
-            $command_style->text(sprintf("Téléversement de la pièce \"%s%s\"", $db_value['NOM_PIECEJOINTE'], $db_value['EXTENSION_PIECEJOINTE']));
-            $file = $this->syncplicity_client->upload($file_contents);
+            $command_style->text(sprintf("Téléversement de la pièce \"%s\"", $file_name));
+            
+            try {
+                $file = $this->syncplicity_client->upload($file_contents, $file_name);
+
+                $command_style->info('La pièce a correctement été téléversée vers Syncplicity');
+            } catch (Exception $e) {
+                $command_style->warning('Erreur lors du téléversement de la pièce vers Syncplicity.'.PHP_EOL.$e->getMessage());
+                $this->prevarisc_service->changerStatutPiece($file_to_export['ID_PIECEJOINTE'], 'on_error');
+
+                continue;
+            }
 
             \assert(\array_key_exists('data_file_id', $file));
             $syncplicity_file_id = $file['data_file_id'];
@@ -70,21 +82,24 @@ final class ExportPieces extends Command
             \assert(\array_key_exists('VirtualFolderId', $file));
             $syncplicity_folder_id = $file['VirtualFolderId'];
 
-            $dossier_id = $db_value['ID_PLATAU'];
+            $dossier_id = $file_to_export['ID_PLATAU'];
 
+            // TODO Vérifier si le fichier existe déjà sur le dossier, si oui on ne l'ajoute pas à nouveau
             $this->piece_service->ajouterPieceDepuisFichierSyncplicity(
                 '',
                 $dossier_id,
                 '',
-                '',
-                '',
+                '2', // Modificative
+                '60', // Etude de sécurité
                 $syncplicity_file_id,
                 $syncplicity_folder_id,
                 hash('sha512', $file_contents)
             );
-        }, $files_to_export);
 
-        $command_style->success("Les pièces ont correctement été téléversées");
+            $this->prevarisc_service->changerStatutPiece($file_to_export['ID_PIECEJOINTE'], 'exported');
+        }
+
+        $command_style->success("Fin d'export des pièces");
 
         return Command::SUCCESS;
     }

@@ -93,8 +93,12 @@ class SyncplicityClient
         if ($this->getFileSize($file_contents) < 10 * 10 ** 6) {
             // On lance l'upload
             $response = $this->request('POST', 'upload', [
-                'form_params' => [
-                    'fileData' => $file_contents,
+                'multipart' => [
+                    [
+                        'name' => 'fileData',
+                        'contents' => $file_contents,
+                        'filename' => $file_name,
+                    ],
                 ],
             ]);
 
@@ -142,13 +146,14 @@ class SyncplicityClient
                 [
                     'name' => 'fileData',
                     'contents' => $file_contents,
+                    'filename' => $file_name,
                 ],
                 [
                     'name' => 'virtualFolderId',
                     'contents' => $ticket_pre_upload['VirtualFolderId'],
                 ],
                 [
-                    'name' => 'SHA-256',
+                    'name' => 'sha256',
                     'contents' => hash('sha256', $file_contents),
                 ],
                 [
