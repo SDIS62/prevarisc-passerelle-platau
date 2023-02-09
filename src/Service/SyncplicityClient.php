@@ -87,7 +87,7 @@ class SyncplicityClient
     /**
      * Upload d'un document.
      */
-    public function upload(string $file_contents) : array
+    public function upload(string $file_contents, string $file_name) : array
     {
         // Si le fichier fait moins de 10mo, alors on lance un upload simple
         if ($this->getFileSize($file_contents) < 10 * 10 ** 6) {
@@ -132,18 +132,33 @@ class SyncplicityClient
         // On envoie le fichier en multipart en utilisant les informations du ticket upload
         $response = $http_client->request('POST', 'v2/mime/files', [
             'query' => [
-                'filepath' => $ticket_pre_upload['Folder_Name'].'/'.'nom_du_fichier',
+                'filepath' => $ticket_pre_upload['Folder_Name'].'/'.urlencode($file_name),
             ],
             'headers' => [
                 'AppKey'        => $ticket_pre_upload['AppKey'],
                 'Authorization' => $ticket_pre_upload['Authorization_for_upload'],
             ],
             'multipart' => [
-                'fileData'        => $file_contents,
-                'virtualFolderId' => $ticket_pre_upload['VirtualFolderId'],
-                'SHA-256'         => hash('sha256', $file_contents),
-                'sessionKey'      => $ticket_pre_upload['Authorization_for_upload'],
-                'filename'        => '',
+                [
+                    'name' => 'fileData',
+                    'contents' => $file_contents,
+                ],
+                [
+                    'name' => 'virtualFolderId',
+                    'contents' => $ticket_pre_upload['VirtualFolderId'],
+                ],
+                [
+                    'name' => 'SHA-256',
+                    'contents' => hash('sha256', $file_contents),
+                ],
+                [
+                    'name' => 'sessionKey',
+                    'contents' => $ticket_pre_upload['Authorization_for_upload'],
+                ],
+                [
+                    'name' => 'filename',
+                    'contents' => $file_name,
+                ],
             ],
         ]);
 
