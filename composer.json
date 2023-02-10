@@ -3,6 +3,7 @@
     "type": "application",
     "description": "Une passerelle d'import / export automatisée entre Prevarisc et Plat'AU",
     "require": {
+        "php": "^7.4 || ^8.0",
         "guzzlehttp/guzzle": "^7.0",
         "kamermans/guzzle-oauth2-subscriber": "^1.0",
         "uma/dic": "^1.0",
@@ -15,7 +16,8 @@
         "adbario/php-dot-notation": "^3.2"
     },
     "require-dev": {
-        "kdubuc/php-cs-fixer-rules": "^1.0"
+        "kdubuc/php-cs-fixer-rules": "^1.0",
+        "vimeo/psalm": "^4.23"
     },
     "autoload": {
         "psr-4": {
