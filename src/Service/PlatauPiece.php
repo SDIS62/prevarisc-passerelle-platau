@@ -3,57 +3,68 @@
 namespace App\Service;
 
 use DateTime;
+use Exception;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface;
 
 final class PlatauPiece extends PlatauAbstract
 {
-    /**
-     * Associe un fichier hébergé sur une instance syncplicity à une pièce Plat'AU.
-     */
-    public function ajouterPieceDepuisFichierSyncplicity(
-        string $numero,
-        string $dossier_id,
-        string $version_no,
-        string $nature,
-        string $type,
-        string $syncplicity_file_id,
-        string $syncplicity_folder_id,
-        string $file_hash_sha512 = null
-    ) : array {
-        // On formatte la pièce Plat'AU
-        $piece = [
-            'noPiece'         => $numero,
-            'nomNaturePiece'  => $nature, // Nomenclature NATURE_PIECE
-            'nomTypePiece'    => $type, // Nomenclature TYPE_PIECE
-            'fileId'          => $syncplicity_file_id,
-            'folderId'        => $syncplicity_folder_id,
-            'dtProduction'    => (new DateTime())->format('Y-m-d'),
-        ];
+    private Prevarisc $prevarisc_service;
+    private SyncplicityClient $syncplicity_client;
 
-        // Si le hash du fichier correspondant à la pièce est donné, on l'envoie à Plat'AU pour qu'il
-        // s'assure que le fichier correspond bien
-        if (null !== $file_hash_sha512) {
-            $piece += [
-                'algoHash' => 'SHA-512',
-                'hash'     => $file_hash_sha512,
+    public function __construct(array $config, Prevarisc $prevarisc_service, SyncplicityClient $syncplicity_client)
+    {
+        $this->prevarisc_service  = $prevarisc_service;
+        $this->syncplicity_client = $syncplicity_client;
+        parent::__construct($config);
+    }
+
+    // FIXME Redécouper cette partie pour que l'upload soit dans la commande ?
+    // ça permettrait de pouvoir mettre des infos dans le terminal
+    /**
+     * Upload les documents sur Syncplicity et formatte le retour pour une utilisation dans une requête d'un objet métier du dossier.
+     */
+    public function formatDocuments(array $pieces, int $type_document) : array
+    {
+        if (0 === \count($pieces)) {
+            return [];
+        }
+
+        $id_acteur = $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'];
+        $documents = [];
+
+        foreach ($pieces as $piece) {
+            $file_contents = $this->prevarisc_service->recupererFichierPhysique($piece['ID_PIECEJOINTE'], $piece['EXTENSION_PIECEJOINTE']);
+            $file_name     = $piece['NOM_PIECEJOINTE'].$piece['EXTENSION_PIECEJOINTE'];
+
+            try {
+                $file = $this->syncplicity_client->upload($file_contents, $file_name);
+                $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'exported');
+            } catch (Exception $e) {
+                $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'on_error');
+
+                continue;
+            }
+
+            \assert(\array_key_exists('data_file_id', $file));
+            $syncplicity_file_id = $file['data_file_id'];
+
+            \assert(\array_key_exists('VirtualFolderId', $file));
+            $syncplicity_folder_id = $file['VirtualFolderId'];
+
+            $documents[] = [
+                'fileId'               => (string) $syncplicity_file_id,
+                'folderId'             => (string) $syncplicity_folder_id,
+                'algoHash'             => 'SHA-512',
+                'dtProduction'         => (new DateTime())->format('Y-m-d'),
+                'hash'                 => hash('sha512', $file_contents),
+                'idActeurProducteur'   => $id_acteur,
+                'nomTypeDocument'      => $type_document,
+                'nomTypeProducteurDoc' => 1, // Personne jouant un rôle dans un dossier
             ];
         }
 
-        // Verse les informations relatives aux pièces constitutives d'un dossier
-        $response = $this->request('POST', 'pieces', [
-            'json' => [
-                [
-                    'idDossier' => $dossier_id,
-                    'noVersion' => $version_no,
-                    'pieces'    => [$piece],
-                ],
-            ],
-        ]);
-
-        $piece = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
-
-        return $piece;
+        return $documents;
     }
 
     /*

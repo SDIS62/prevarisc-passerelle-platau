@@ -8,6 +8,14 @@ use DateInterval;
 
 final class PlatauConsultation extends PlatauAbstract
 {
+    private PlatauPiece $piece_service;
+
+    public function __construct(array $config, PlatauPiece $piece_service)
+    {
+        $this->piece_service = $piece_service;
+        parent::__construct($config);
+    }
+
     /**
      * Recherche de plusieurs consultations.
      */
@@ -102,6 +110,8 @@ final class PlatauConsultation extends PlatauAbstract
                 default: throw new Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
             }
         }
+        // TODO Passer les pièces en paramètre et ajouter dans la requête
+        // $documents = $this->piece_service->formatDocuments($pieces, 6);
 
         // Envoie de la PEC dans Plat'AU
         $this->request('post', 'pecMetier/consultations', [
@@ -130,7 +140,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = []) : void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $pieces = []) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3]]);
@@ -139,6 +149,8 @@ final class PlatauConsultation extends PlatauAbstract
         $description = vsprintf('Avis Prevarisc. Prescriptions données : %s', [
             0 === \count($prescriptions) ? 'RAS' : implode(', ', array_column($prescriptions, 'libelle')),
         ]);
+
+        $documents = $this->piece_service->formatDocuments($pieces, 9);
 
         // Versement d'un avis
         $this->request('post', 'avis', [
@@ -153,6 +165,7 @@ final class PlatauConsultation extends PlatauAbstract
                             'txAvis'             => $description,
                             'dtAvis'             => (new Datetime())->format('Y-m-d'),
                             'idActeurAuteur'     => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
+                            'documents'          => $documents,
                         ],
                     ],
                     'idDossier' => $consultation['dossier']['idDossier'],
