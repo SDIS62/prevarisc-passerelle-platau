@@ -95,7 +95,7 @@ class SyncplicityClient
             $response = $this->request('POST', 'upload', [
                 'multipart' => [
                     [
-                        'name' => 'fileData',
+                        'name'     => 'fileData',
                         'contents' => $file_contents,
                         'filename' => $file_name,
                     ],
@@ -144,24 +144,24 @@ class SyncplicityClient
             ],
             'multipart' => [
                 [
-                    'name' => 'fileData',
+                    'name'     => 'fileData',
                     'contents' => $file_contents,
                     'filename' => $file_name,
                 ],
                 [
-                    'name' => 'virtualFolderId',
+                    'name'     => 'virtualFolderId',
                     'contents' => $ticket_pre_upload['VirtualFolderId'],
                 ],
                 [
-                    'name' => 'sha256',
+                    'name'     => 'sha256',
                     'contents' => hash('sha256', $file_contents),
                 ],
                 [
-                    'name' => 'sessionKey',
+                    'name'     => 'sessionKey',
                     'contents' => $ticket_pre_upload['Authorization_for_upload'],
                 ],
                 [
-                    'name' => 'filename',
+                    'name'     => 'filename',
                     'contents' => $file_name,
                 ],
             ],
@@ -179,8 +179,8 @@ class SyncplicityClient
         ];
     }
 
-    public static function getFileSize(string $file_contents): int
+    public static function getFileSize(string $file_contents) : int|false
     {
-        return false === mb_detect_encoding($file_contents, strict: true) ? strlen($file_contents) : mb_strlen($file_contents);
+        return false === mb_detect_encoding($file_contents, strict: true) ? strlen($file_contents) : \mb_strlen($file_contents);
     }
 }

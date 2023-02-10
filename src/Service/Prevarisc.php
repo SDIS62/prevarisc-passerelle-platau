@@ -344,9 +344,9 @@ class Prevarisc
     }
 
     /**
-     * Modifie le statut d'envoi vers Plat'AU de la pièce
+     * Modifie le statut d'envoi vers Plat'AU de la pièce.
      */
-    public function changerStatutPiece(int $piece_jointe_id, string $status): void
+    public function changerStatutPiece(int $piece_jointe_id, string $status) : void
     {
         $query_builder = $this->db->createQueryBuilder();
 
@@ -360,6 +360,10 @@ class Prevarisc
             ->executeQuery()
             ->fetchOne()
         ;
+
+        if (false === $id_statut) {
+            return;
+        }
 
         $query_builder
             ->update('piecejointe', 'pj')
