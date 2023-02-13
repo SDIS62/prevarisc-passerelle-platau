@@ -31,7 +31,7 @@ if($config === false) {
 try {
     $config = json_decode($config, true, 512, \JSON_THROW_ON_ERROR);
 }
-catch(Exception) {
+catch(Exception $e) {
     throw new Exception("Le fichier de configuration est invalide, veuillez vérifier sa syntaxe.");
 }
 
