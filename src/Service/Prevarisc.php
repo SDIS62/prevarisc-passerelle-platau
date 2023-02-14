@@ -315,7 +315,7 @@ class Prevarisc
     /**
      * Récupère les pièces jointes avec un statut d'envoi vers Plat'AU spécifique.
      */
-    public function recupererPiecesAvecStatut(string $status) : array
+    public function recupererPiecesAvecStatut(int $id_dossier, string $status) : array
     {
         $query_builder = $this->db->createQueryBuilder();
 
@@ -326,9 +326,13 @@ class Prevarisc
             ->join('pj', 'dossierpj', 'dpj', 'dpj.ID_PIECEJOINTE = pj.ID_PIECEJOINTE')
             ->join('dpj', 'dossier', 'd', 'd.ID_DOSSIER = dpj.ID_DOSSIER')
             ->where(
-                $query_builder->expr()->eq('pjs.NOM_STATUT', '?')
+                $query_builder->expr()->and(
+                    $query_builder->expr()->eq('d.ID_DOSSIER', '?'),
+                    $query_builder->expr()->eq('pjs.NOM_STATUT', '?')
+                )
             )
-            ->setParameter(0, $status)
+            ->setParameter(0, $id_dossier)
+            ->setParameter(1, $status)
             ->executeQuery()
         ;
 

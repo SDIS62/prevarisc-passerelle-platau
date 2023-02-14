@@ -72,7 +72,7 @@ final class ExportAvis extends Command
                 $prescriptions = $this->prevarisc_service->getPrescriptions($dossier['ID_DOSSIER']);
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = $this->prevarisc_service->recupererPiecesAvecStatut('to_be_exported');
+                $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
 
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
                 if ('1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === (string) $dossier['AVIS_DOSSIER_COMMISSION']) {

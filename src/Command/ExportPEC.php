@@ -13,6 +13,9 @@ use App\Service\PlatauConsultation as PlatauConsultationService;
 
 final class ExportPEC extends Command
 {
+    private PrevariscService $prevarisc_service;
+    private PlatauConsultationService $consultation_service;
+
     /**
      * Initialisation de la commande.
      */
@@ -66,14 +69,17 @@ final class ExportPEC extends Command
                 // Récupération du dossier lié à la consultation
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
+                // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
+                $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
+
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse);
+                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces);
                     $output->writeln('Notification de la Prise En Compte Négative envoyée !');
                 } elseif ('0' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse);
+                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces);
                     $output->writeln('Notification de la Prise En Compte Positive envoyée !');
                 } else {
                     $output->writeln("Impossible d'envoyer une PEC pour la consultation $consultation_id pour le moment (en attente de l'indication de complétude du dossier dans Prevarisc) ...");

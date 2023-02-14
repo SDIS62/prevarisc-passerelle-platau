@@ -19,8 +19,6 @@ final class PlatauPiece extends PlatauAbstract
         parent::__construct($config);
     }
 
-    // FIXME Redécouper cette partie pour que l'upload soit dans la commande ?
-    // ça permettrait de pouvoir mettre des infos dans le terminal
     /**
      * Upload les documents sur Syncplicity et formatte le retour pour une utilisation dans une requête d'un objet métier du dossier.
      */
