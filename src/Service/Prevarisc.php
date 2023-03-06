@@ -7,6 +7,7 @@ use Exception;
 use League\Flysystem;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class Prevarisc
 {
@@ -384,36 +385,29 @@ class Prevarisc
         ;
     }
 
-    /**
-     * Ajoute les métadonnées d'envoi initial des objets métiers de la consultation.
-     */
-    public function ajouterMetadonneesEnvoi(string $consultation_id, string $objet_metier, string $statut) : void
+    public function setMetadonneesEnvoi(string $consultation_id, string $objet_metier, string $statut) : QueryBuilder
     {
         $query_builder = $this->db->createQueryBuilder();
 
-        $query_builder
-            ->insert('platauconsultation')
-            ->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation_id))
-            ->setValue(sprintf('STATUT_%s', $objet_metier), $query_builder->createPositionalParameter($statut))
+        $consultation_metadonnees = $query_builder
+            ->select('ID_PLATAU')
+            ->from('platauconsultation')
+            ->where(
+                $query_builder->expr()->eq('ID_PLATAU', '?')
+            )
+            ->setParameter(0, $consultation_id)
+            ->executeQuery()
         ;
 
-        if ('in_error' !== $statut) {
+        if (false === $consultation_metadonnees->fetchOne()) {
             $query_builder
-                ->setValue(sprintf('DATE_%s', $objet_metier), $query_builder->createPositionalParameter(date('Y-m-d')))
+                ->insert('platauconsultation')
+                ->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation_id))
+                ->setValue(sprintf('STATUT_%s', $objet_metier), $query_builder->createPositionalParameter($statut))
             ;
+
+            return $query_builder;
         }
-
-        $query_builder
-            ->executeStatement()
-        ;
-    }
-
-    /**
-     * Change le statut d'envoi des objets métiers de la consultation.
-     */
-    public function changerMetadonneesEnvoi(string $consultation_id, string $objet_metier, string $statut) : void
-    {
-        $query_builder = $this->db->createQueryBuilder();
 
         $query_builder
             ->update('platauconsultation')
@@ -422,8 +416,9 @@ class Prevarisc
                 $query_builder->expr()->eq('ID_PLATAU', '?')
             )
             ->setParameter(0, $consultation_id)
-            ->executeStatement()
         ;
+
+        return $query_builder;
     }
 
     /**

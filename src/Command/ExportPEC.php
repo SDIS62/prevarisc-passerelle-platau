@@ -82,23 +82,40 @@ final class ExportPEC extends Command
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
 
                     $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces, $informations_renvoi);
-                    $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account');
-                    $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress');
+                    $this->prevarisc_service
+                        ->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')
+                        ->set('DATE_PEC', date('Y-m-d'))
+                        ->executeStatement()
+                    ;
+                    $this->prevarisc_service
+                        ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress')
+                        ->executeStatement()
+                    ;
 
                     $output->writeln('Notification de la Prise En Compte Négative envoyée !');
                 } elseif ('0' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
 
                     $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces, $informations_renvoi);
-                    $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account');
-                    $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress');
+                    $this->prevarisc_service
+                        ->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')
+                        ->set('DATE_PEC', date('Y-m-d'))
+                        ->executeStatement()
+                    ;
+                    $this->prevarisc_service
+                        ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress')
+                        ->executeStatement()
+                    ;
 
                     $output->writeln('Notification de la Prise En Compte Positive envoyée !');
                 } else {
                     $output->writeln("Impossible d'envoyer une PEC pour la consultation $consultation_id pour le moment (en attente de l'indication de complétude du dossier dans Prevarisc) ...");
                 }
             } catch (Exception $e) {
-                $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'in_error');
+                $this->prevarisc_service
+                    ->setMetadonneesEnvoi($consultation_id, 'PEC', 'in_error')
+                    ->executeStatement()
+                ;
                 $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
             }
         }

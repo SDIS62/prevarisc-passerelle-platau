@@ -87,7 +87,11 @@ final class ExportAvis extends Command
                     $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
 
                     $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, $informations_renvoi);
-                    $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'AVIS', 'treated');
+                    $this->prevarisc_service
+                        ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')
+                        ->set('DATE_AVIS', date('Y-m-d'))
+                        ->executeStatement()
+                    ;
 
                     $output->writeln('Avis envoyé !');
                 } else {
@@ -97,7 +101,10 @@ final class ExportAvis extends Command
                 array_map(function ($piece) {
                     $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'to_be_exported');
                 }, $pieces);
-                $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'AVIS', 'in_error');
+                $this->prevarisc_service
+                    ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_error')
+                    ->executeStatement()
+                ;
 
                 $output->writeln("Problème lors du versement de l'avis : {$e->getMessage()}");
             }
