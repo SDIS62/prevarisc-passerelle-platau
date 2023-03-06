@@ -19,7 +19,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Recherche de plusieurs consultations.
      */
-    public function rechercheConsultations(array $params = [], string $order_by = 'DT_DEPOT', string $sort = 'DESC'): array
+    public function rechercheConsultations(array $params = [], string $order_by = 'DT_DEPOT', string $sort = 'DESC') : array
     {
         // On recherche la consultation en fonction des critères de recherche
         $paginator = $this->pagination('post', 'consultations/recherche', [
@@ -44,7 +44,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Récupération d'une consultation.
      */
-    public function getConsultation(string $consultation_id, array $params = []): array
+    public function getConsultation(string $consultation_id, array $params = []) : array
     {
         // On recherche la consultation demandée
         $consultations = $this->rechercheConsultations(['idConsultation' => $consultation_id] + $params);
@@ -63,7 +63,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Récupération des pièces d'une consultation.
      */
-    public function getPieces(string $consultation_id): array
+    public function getPieces(string $consultation_id) : array
     {
         // On recherche la consultation associée pour récupérer le dossier lié
         $consultation = $this->getConsultation($consultation_id);
@@ -80,7 +80,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Retourne un tableau représentant la consultation.
      */
-    private function parseConsultation(array $consultation): array
+    private function parseConsultation(array $consultation) : array
     {
         // On vient récupérer les détails de la consultation recherchée, qui, pour une raison étrange, se trouvent
         // dans un tableau de consultations auxquelles le dossier lié est rattaché.
@@ -94,7 +94,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null, string $observations = null, array $pieces = [], array $informations_renvoi): void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null, string $observations = null, array $pieces = [], array $informations_renvoi) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -150,7 +150,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $pieces = [], array $informations_renvoi): void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $pieces = [], array $informations_renvoi) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3]]);

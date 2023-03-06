@@ -39,7 +39,7 @@ final class ExportAvis extends Command
     /**
      * Logique d'execution de la commande.
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output) : int
     {
         // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
         // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte - en cours de traitement")
@@ -76,7 +76,7 @@ final class ExportAvis extends Command
 
                 $informations_renvoi = [
                     'statut' => $dossier['STATUT_AVIS'],
-                    'date' => $dossier['DATE_AVIS'],
+                    'date'   => $dossier['DATE_AVIS'],
                 ];
 
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU

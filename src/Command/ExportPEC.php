@@ -41,7 +41,7 @@ final class ExportPEC extends Command
     /**
      * Logique d'execution de la commande.
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output) : int
     {
         // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
         // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente de PEC (c'est à dire avec un état "Non Traitée")
@@ -74,7 +74,7 @@ final class ExportPEC extends Command
 
                 $informations_renvoi = [
                     'statut' => $dossier['STATUT_PEC'],
-                    'date' => $dossier['DATE_PEC'],
+                    'date'   => $dossier['DATE_PEC'],
                 ];
 
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
