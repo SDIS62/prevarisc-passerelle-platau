@@ -39,7 +39,7 @@ final class ImportConsultations extends Command
     /**
      * Logique d'execution de la commande.
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output) : int
     {
         // Récupération des consultations dans un état Versée (c'est à dire Non Traitée)
         $output->writeln('Récupération des consultations versées  ...');
