@@ -74,7 +74,7 @@ final class ImportConsultations extends Command
                 $demandeur           = null !== $consultation['idServiceConsultant'] ? $this->acteur_service->recuperationActeur($consultation['idServiceConsultant']) : null;
 
                 // Versement de la consultation dans Prevarisc
-                // $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
+                $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
                 $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'awaiting');
 
                 // La consultation est importée !
