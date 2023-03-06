@@ -39,7 +39,7 @@ final class ExportAvis extends Command
     /**
      * Logique d'execution de la commande.
      */
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
         // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte - en cours de traitement")
@@ -74,13 +74,21 @@ final class ExportAvis extends Command
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
                 $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
 
+                $informations_renvoi = [
+                    'statut' => $dossier['STATUT_AVIS'],
+                    'date' => $dossier['DATE_AVIS'],
+                ];
+
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
                 if ('1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === (string) $dossier['AVIS_DOSSIER_COMMISSION']) {
                     // On verse l'avis de commission dans Plat'AU
                     // Pour rappel, un avis de commission à 1 = favorable, 2 = défavorable.
                     $est_favorable = '1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'];
                     $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces);
+
+                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, $informations_renvoi);
+                    $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'AVIS', 'treated');
+
                     $output->writeln('Avis envoyé !');
                 } else {
                     $output->writeln("Impossible d'envoyer un avis pour la consultation $consultation_id pour le moment (en attente de l'avis de commission dans Prevarisc) ...");
@@ -89,6 +97,7 @@ final class ExportAvis extends Command
                 array_map(function ($piece) {
                     $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'to_be_exported');
                 }, $pieces);
+                $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'AVIS', 'in_error');
 
                 $output->writeln("Problème lors du versement de l'avis : {$e->getMessage()}");
             }

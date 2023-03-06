@@ -19,7 +19,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Recherche de plusieurs consultations.
      */
-    public function rechercheConsultations(array $params = [], string $order_by = 'DT_DEPOT', string $sort = 'DESC') : array
+    public function rechercheConsultations(array $params = [], string $order_by = 'DT_DEPOT', string $sort = 'DESC'): array
     {
         // On recherche la consultation en fonction des critères de recherche
         $paginator = $this->pagination('post', 'consultations/recherche', [
@@ -44,7 +44,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Récupération d'une consultation.
      */
-    public function getConsultation(string $consultation_id, array $params = []) : array
+    public function getConsultation(string $consultation_id, array $params = []): array
     {
         // On recherche la consultation demandée
         $consultations = $this->rechercheConsultations(['idConsultation' => $consultation_id] + $params);
@@ -63,7 +63,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Récupération des pièces d'une consultation.
      */
-    public function getPieces(string $consultation_id) : array
+    public function getPieces(string $consultation_id): array
     {
         // On recherche la consultation associée pour récupérer le dossier lié
         $consultation = $this->getConsultation($consultation_id);
@@ -80,7 +80,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Retourne un tableau représentant la consultation.
      */
-    private function parseConsultation(array $consultation) : array
+    private function parseConsultation(array $consultation): array
     {
         // On vient récupérer les détails de la consultation recherchée, qui, pour une raison étrange, se trouvent
         // dans un tableau de consultations auxquelles le dossier lié est rattaché.
@@ -94,7 +94,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null, string $observations = null, array $pieces = []) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null, string $observations = null, array $pieces = [], array $informations_renvoi): void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -105,13 +105,22 @@ final class PlatauConsultation extends PlatauAbstract
             $delai_reponse            = $consultation['delaiDeReponse'];
             $type_date_limite_reponse = $consultation['nomTypeDelai']['libNom'];
             switch ($type_date_limite_reponse) {
-                case 'Jours calendaires': $date_limite_reponse_interval = new DateInterval("P${delai_reponse}D"); break;
-                case 'Mois': $date_limite_reponse_interval              = new DateInterval("P${delai_reponse}M"); break;
+                case 'Jours calendaires': $date_limite_reponse_interval = new DateInterval("P${delai_reponse}D");
+                    break;
+                case 'Mois': $date_limite_reponse_interval              = new DateInterval("P${delai_reponse}M");
+                    break;
                 default: throw new Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
             }
         }
 
         $documents = $this->piece_service->formatDocuments($pieces, 6);
+
+        $dt_pec_metier = 'to_export' === $informations_renvoi['statut'] ?
+            $informations_renvoi['date'] :
+            (new Datetime())->format('Y-m-d');
+        $dt_limite_reponse = 'to_export' === $informations_renvoi['statut'] ?
+            DateTime::createFromFormat('Y-m-d', $informations_renvoi['date'])->add($date_limite_reponse_interval) :
+            (new Datetime())->add($date_limite_reponse_interval);
 
         // Envoie de la PEC dans Plat'AU
         $this->request('post', 'pecMetier/consultations', [
@@ -122,8 +131,8 @@ final class PlatauConsultation extends PlatauAbstract
                             'idConsultation' => $consultation_id,
                             'noVersion'      => $consultation['noVersion'],
                             'pecMetier'      => [
-                                'dtPecMetier'            => (new Datetime())->format('Y-m-d'),
-                                'dtLimiteReponse'        => (new Datetime())->add($date_limite_reponse_interval)->format('Y-m-d'),
+                                'dtPecMetier'            => $dt_pec_metier,
+                                'dtLimiteReponse'        => $dt_limite_reponse->format('Y-m-d'),
                                 'idActeurEmetteur'       => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
                                 'nomStatutPecMetier'     => $est_positive ? 1 : 2,
                                 'txObservations'         => (string) $observations,
@@ -141,7 +150,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $pieces = []) : void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $pieces = [], array $informations_renvoi): void
     {
         // On recherche dans Plat'AU les détails de la consultation liée
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3]]);
@@ -152,6 +161,10 @@ final class PlatauConsultation extends PlatauAbstract
         ]);
 
         $documents = $this->piece_service->formatDocuments($pieces, 9);
+
+        $dt_avis = 'to_export' === $informations_renvoi['statut'] ?
+            $informations_renvoi['date'] :
+            (new Datetime())->format('Y-m-d');
 
         // Versement d'un avis
         $this->request('post', 'avis', [
@@ -164,7 +177,7 @@ final class PlatauConsultation extends PlatauAbstract
                             'nomNatureAvisRendu' => true === $est_favorable ? (0 === \count($prescriptions) ? 1 : 2) : 3, // 1 = favorable, 2 = favorable avec prescriptions, 3 = défavorable
                             'nomTypeAvis'        => 1, // Avis de type "simple"
                             'txAvis'             => $description,
-                            'dtAvis'             => (new Datetime())->format('Y-m-d'),
+                            'dtAvis'             => $dt_avis,
                             'idActeurAuteur'     => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
                             'documents'          => $documents,
                         ],

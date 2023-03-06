@@ -32,7 +32,7 @@ class Prevarisc
     /**
      * Récupère l'ID Utilisateur associé à Plat'AU dans Prevarisc.
      */
-    public function getIdUtilisateurPlatau() : int
+    public function getIdUtilisateurPlatau(): int
     {
         return $this->user_platau_id;
     }
@@ -40,12 +40,16 @@ class Prevarisc
     /**
      * Récupération dans Prevarisc d'un dossier Plat'AU.
      */
-    public function recupererDossierDeConsultation(string $consultation_id) : array
+    public function recupererDossierDeConsultation(string $consultation_id): array
     {
         $dossier = $this->db->createQueryBuilder()
-            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION')
+            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION', 'STATUT_PEC', 'DATE_PEC', 'STATUT_AVIS', 'DATE_AVIS')
             ->from('dossier')
-            ->where('ID_PLATAU = ?')->setParameter(0, $consultation_id)->execute()->fetch();
+            ->leftJoin('dossier', 'platauconsultation', 'platauconsultation', 'dossier.ID_PLATAU = platauconsultation.ID_PLATAU')
+            ->where('dossier.ID_PLATAU = ?')
+            ->setParameter(0, $consultation_id)
+            ->execute()->fetch()
+        ;
 
         // Si la requête vers la base de donnée n'a rien donné, alors on lève une exception.
         if (empty($dossier)) {
@@ -58,7 +62,7 @@ class Prevarisc
     /**
      * Vérifie que la consultation existe dans Prevarisc.
      */
-    public function consultationExiste(string $consultation_id) : bool
+    public function consultationExiste(string $consultation_id): bool
     {
         try {
             $this->recupererDossierDeConsultation($consultation_id);
@@ -72,16 +76,16 @@ class Prevarisc
     /**
      * Vérifie si la base de données Prevarisc est disponible.
      */
-    public function estDisponible() : bool
+    public function estDisponible(): bool
     {
         return $this->db->connect();
     }
 
-    // TODO Ajouter la présence de la table piecejointestatut
+    // TODO Ajouter la présence de la table piecejointestatut et platauconsultation
     /**
      * Vérifie que la base de données Prevarisc est compatible avec les importations de consultations Plat'AU.
      */
-    public function estCompatible() : bool
+    public function estCompatible(): bool
     {
         return \in_array('ID_PLATAU', array_map(function (Column $column) {
             return $column->getName();
@@ -91,7 +95,7 @@ class Prevarisc
     /**
      * Versement d'une consultation Plat'AU dans Prevarisc.
      */
-    public function importConsultation(array $consultation, array $demandeur = null, array $service_instructeur = null) : void
+    public function importConsultation(array $consultation, array $demandeur = null, array $service_instructeur = null): void
     {
         // On démarre une transaction SQL. Si jamais les choses se passent mal, on pourra revenir en arrière.
         $this->db->beginTransaction();
@@ -200,7 +204,7 @@ class Prevarisc
      * - article ;
      * - texte.
      */
-    public function getPrescriptions(int $dossier_id) : array
+    public function getPrescriptions(int $dossier_id): array
     {
         // On lance une requête pour récupérer les prescriptions + prescriptions types d'un dossier
         $prescriptions = $this->db->createQueryBuilder()
@@ -231,7 +235,7 @@ class Prevarisc
     /**
      * Vérifie que la pièce jointe existe dans Prevarisc.
      */
-    public function pieceJointeExisteDansDossier(int $dossier_id, string $filename) : bool
+    public function pieceJointeExisteDansDossier(int $dossier_id, string $filename): bool
     {
         $query_builder = $this->db->createQueryBuilder();
 
@@ -256,7 +260,7 @@ class Prevarisc
     /**
      * Importer des pièces jointes dans un dossier.
      */
-    public function creerPieceJointe(int $dossier_id, array $piece, string $extension, string $file_contents) : void
+    public function creerPieceJointe(int $dossier_id, array $piece, string $extension, string $file_contents): void
     {
         // Génération du nom du fichier
         $filename = vsprintf('PLATAU-%s-%s-v%d', [$piece['idPiece'], $piece['noPiece'], $piece['noVersion']]);
@@ -315,7 +319,7 @@ class Prevarisc
     /**
      * Récupère les pièces jointes avec un statut d'envoi vers Plat'AU spécifique.
      */
-    public function recupererPiecesAvecStatut(int $id_dossier, string $status) : array
+    public function recupererPiecesAvecStatut(int $id_dossier, string $status): array
     {
         $query_builder = $this->db->createQueryBuilder();
 
@@ -342,7 +346,7 @@ class Prevarisc
     /**
      * Récupère la pièce jointe sur le serveur.
      */
-    public function recupererFichierPhysique(int $piece_jointe_id, string $piece_jointe_extension) : string
+    public function recupererFichierPhysique(int $piece_jointe_id, string $piece_jointe_extension): string
     {
         return $this->filesystem->read("${piece_jointe_id}${piece_jointe_extension}");
     }
@@ -350,7 +354,7 @@ class Prevarisc
     /**
      * Modifie le statut d'envoi vers Plat'AU de la pièce.
      */
-    public function changerStatutPiece(int $piece_jointe_id, string $status) : void
+    public function changerStatutPiece(int $piece_jointe_id, string $statut): void
     {
         $query_builder = $this->db->createQueryBuilder();
 
@@ -360,7 +364,7 @@ class Prevarisc
             ->where(
                 $query_builder->expr()->eq('NOM_STATUT', '?')
             )
-            ->setParameter(0, $status)
+            ->setParameter(0, $statut)
             ->executeQuery()
             ->fetchOne()
         ;
@@ -381,11 +385,53 @@ class Prevarisc
     }
 
     /**
+     * Ajoute les métadonnées d'envoi initial des objets métiers de la consultation.
+     */
+    public function ajouterMetadonneesEnvoi(int $consultation_id, string $objet_metier, string $statut): void
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $query_builder
+            ->insert('platauconsultation')
+            ->set('ID_PLATAU', $consultation_id)
+            ->set(sprintf('STATUT_%s', $objet_metier), $statut)
+        ;
+
+        if ('in_error' !== $statut) {
+            $query_builder
+                ->set(sprintf('DATE_%s', $objet_metier), date('Y-m-d'))
+            ;
+        }
+
+        $query_builder
+            ->executeStatement()
+        ;
+    }
+
+    /**
+     * Change le statut d'envoi des objets métiers de la consultation.
+     */
+    public function changerMetadonneesEnvoi(int $consultation_id, string $objet_metier, string $statut): void
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $query_builder
+            ->update('platauconsultation')
+            ->set(sprintf('STATUT_%s', $objet_metier), $statut)
+            ->where(
+                $query_builder->expr()->eq('ID_PLATAU', '?')
+            )
+            ->setParameter(0, $consultation_id)
+            ->executeStatement()
+        ;
+    }
+
+    /**
      * Correspondance entre une nature de dossier PlatAU et Prevarisc.
      * On lui donne un ID PlatAU et il nous ressort un ID Prevarisc.
      * Si l'ID Prevarisc correspondant n'existe pas, la fonction lève une exception.
      */
-    public static function correspondanceNaturePrevarisc(int $platau_nature_id) : int
+    public static function correspondanceNaturePrevarisc(int $platau_nature_id): int
     {
         switch ($platau_nature_id) {
             case 1: return 62; // Certificat d’urbanisme d’information (CUa)

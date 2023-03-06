@@ -41,7 +41,7 @@ final class ExportPEC extends Command
     /**
      * Logique d'execution de la commande.
      */
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
         // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente de PEC (c'est à dire avec un état "Non Traitée")
@@ -72,19 +72,33 @@ final class ExportPEC extends Command
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
                 $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
 
+                $informations_renvoi = [
+                    'statut' => $dossier['STATUT_PEC'],
+                    'date' => $dossier['DATE_PEC'],
+                ];
+
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces);
+
+                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces, $informations_renvoi);
+                    $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account');
+                    $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress');
+
                     $output->writeln('Notification de la Prise En Compte Négative envoyée !');
                 } elseif ('0' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
-                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces);
+
+                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces, $informations_renvoi);
+                    $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account');
+                    $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress');
+
                     $output->writeln('Notification de la Prise En Compte Positive envoyée !');
                 } else {
                     $output->writeln("Impossible d'envoyer une PEC pour la consultation $consultation_id pour le moment (en attente de l'indication de complétude du dossier dans Prevarisc) ...");
                 }
             } catch (Exception $e) {
+                $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'in_error');
                 $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
             }
         }
