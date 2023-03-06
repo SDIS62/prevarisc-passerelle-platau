@@ -39,7 +39,7 @@ final class ImportConsultations extends Command
     /**
      * Logique d'execution de la commande.
      */
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Récupération des consultations dans un état Versée (c'est à dire Non Traitée)
         $output->writeln('Récupération des consultations versées  ...');
@@ -74,8 +74,8 @@ final class ImportConsultations extends Command
                 $demandeur           = null !== $consultation['idServiceConsultant'] ? $this->acteur_service->recuperationActeur($consultation['idServiceConsultant']) : null;
 
                 // Versement de la consultation dans Prevarisc
-                $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
-                $this->prevarisc_service->changerMetadonneesEnvoi($consultation_id, 'PEC', 'awaiting');
+                // $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
+                $this->prevarisc_service->ajouterMetadonneesEnvoi($consultation_id, 'PEC', 'awaiting');
 
                 // La consultation est importée !
                 $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");
