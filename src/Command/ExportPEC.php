@@ -84,7 +84,8 @@ final class ExportPEC extends Command
                     $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces, $informations_renvoi);
                     $this->prevarisc_service
                         ->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')
-                        ->set('DATE_PEC', date('Y-m-d'))
+                        ->set('DATE_PEC', ':date_pec')
+                        ->setParameter('date_pec', date('Y-m-d'))
                         ->executeStatement()
                     ;
                     $this->prevarisc_service
@@ -99,7 +100,8 @@ final class ExportPEC extends Command
                     $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces, $informations_renvoi);
                     $this->prevarisc_service
                         ->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')
-                        ->set('DATE_PEC', date('Y-m-d'))
+                        ->set('DATE_PEC', ':date_pec')
+                        ->setParameter('date_pec', date('Y-m-d'))
                         ->executeStatement()
                     ;
                     $this->prevarisc_service
