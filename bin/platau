@@ -6,6 +6,13 @@ require_once __DIR__.'/../vendor/autoload.php';
 use App\Console;
 use Symfony\Component\Console\Input\ArgvInput;
 
+// str_starts_with shim for php 7
+if (!function_exists('str_starts_with')) {
+    function str_starts_with($haystack, $needle) {
+        return (string) $needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0;
+    }
+}
+
 // Récupération du chemin vers le fichier de configuration
 $argvInput = new ArgvInput();
 if (!$argvInput->hasParameterOption('--config')) {
@@ -15,8 +22,18 @@ $config_path = $argvInput->getParameterOption('--config');
 
 // Chargement du fichier de configuration.
 // Le chemin vers le fichier de configuration donné doit être relatif à l'executable platau.
-$config = file_get_contents(getcwd() . '/' . $config_path);
-$config = json_decode($config, true, 512, \JSON_THROW_ON_ERROR);
+$config = file_get_contents(str_starts_with($config_path, DIRECTORY_SEPARATOR) ? $config_path : getcwd() . DIRECTORY_SEPARATOR . $config_path);
+if($config === false) {
+    throw new Exception("Fichier de configuration non trouvé : $config_path");
+}
+
+// Vérification de la validité du fichier JSON
+try {
+    $config = json_decode($config, true, 512, \JSON_THROW_ON_ERROR);
+}
+catch(Exception $e) {
+    throw new Exception("Le fichier de configuration est invalide, veuillez vérifier sa syntaxe.");
+}
 
 // Construction de l'application console avec la configuration donnée
 $application = new Console($config);

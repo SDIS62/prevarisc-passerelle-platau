@@ -11,13 +11,24 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Recherche de plusieurs consultations.
      */
-    public function rechercheConsultations(array $params = []) : array
+    public function rechercheConsultations(array $params = [], string $order_by = 'DT_DEPOT', string $sort = 'DESC') : array
     {
         // On recherche la consultation en fonction des critères de recherche
-        $consultations = $this->pagination('post', 'consultations/recherche', ['json' => ['criteresSurConsultations' => $params]]);
+        $paginator = $this->pagination('post', 'consultations/recherche', [
+            'json' => [
+                'criteresSurConsultations' => $params,
+            ],
+            'query' => [
+                'colonneTri' => $order_by,
+                'sensTri'    => $sort,
+            ],
+        ]);
+
+        // On limite le nombre de consultations retournées à 50
+        $paginator->setMaxPerPage(50);
 
         // On parse l'ensemble des consultations de la recherche
-        $consultations = array_map(fn ($consultation) => $this->parseConsultation($consultation), (array) $consultations->getCurrentPageResults());
+        $consultations = array_map(fn ($consultation) => $this->parseConsultation($consultation), (array) $paginator->getCurrentPageResults());
 
         return $consultations;
     }

@@ -114,3 +114,13 @@ Pour envoyer les avis de commission dans Plat'AU :
 ```
 $ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json [--consultation-id=xxx-xxx-xxx] export-avis
 ```
+
+#### Détails d'une consultation
+
+Afin de vérifier l'état d'une consultation dans Plat'AU, la passerelle permet de récupérer facilement l'ensemble des données la concernant afin de les lire directement dans la console.
+
+L'option facultative "champ" ordonne à la commande de ne retourner qu'un champ bien spécifique, en utilisant la syntaxe "dot notation" (par exemple, pour accéder au libellé de l'état d'une consultation, il faut spécifier "dossier.consultations.0.nomEtatConsultation.libNom").
+
+```
+$ php bin/platau --config=CHEMIN_RELATIF_VERS_LE_FICHIER_DE_CONFIGURATION.json details-consultation [--champ=xxx.xxx.xxx] xxx-xxx-xxx
+```
