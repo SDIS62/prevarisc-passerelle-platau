@@ -69,7 +69,7 @@ final class ExportPEC extends Command
                 // Récupération du dossier lié à la consultation
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
-                if (\in_array($consultation['nomEtatConsultation']['idNom'], [2, 3]) && 'to_export' !== $dossier['STATUT_PEC']) {
+                if (\in_array($consultation['nomEtatConsultation']['idNom'], [2, 3]) && !\in_array($dossier['STATUT_PEC'], ['to_export', 'in_error'])) {
                     continue;
                 }
 

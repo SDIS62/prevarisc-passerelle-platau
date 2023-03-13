@@ -68,7 +68,7 @@ final class ExportAvis extends Command
                 // Récupération du dossier dans Prevarisc
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
-                if (6 === $consultation['nomEtatConsultation']['idNom'] && 'to_export' !== $dossier['STATUT_AVIS']) {
+                if (6 === $consultation['nomEtatConsultation']['idNom'] && !\in_array($dossier['STATUT_AVIS'], ['to_export', 'in_error'])) {
                     continue;
                 }
 
