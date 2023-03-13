@@ -82,7 +82,6 @@ class Prevarisc
         return $this->db->connect();
     }
 
-    // TODO Ajouter la présence de la table piecejointestatut et platauconsultation
     /**
      * Vérifie que la base de données Prevarisc est compatible avec les importations de consultations Plat'AU.
      */
@@ -90,7 +89,7 @@ class Prevarisc
     {
         return \in_array('ID_PLATAU', array_map(function (Column $column) {
             return $column->getName();
-        }, $this->db->getSchemaManager()->listTableColumns('dossier')));
+        }, $this->db->getSchemaManager()->listTableColumns('dossier'))) && Utils::containsNecessaryTables($this->db);
     }
 
     /**
