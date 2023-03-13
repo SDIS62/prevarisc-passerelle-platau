@@ -50,7 +50,7 @@ final class ExportPEC extends Command
             $consultations_en_attente_de_pec = [$this->consultation_service->getConsultation($input->getOption('consultation-id'))];
         } else {
             $output->writeln('Recherche de consultations en attente de prise en compte métier ou en cours de traitement ...');
-            $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [1, 3]]);
+            $consultations_en_attente_de_pec = $this->consultation_service->rechercheConsultations(['nomEtatConsultation' => [1, 2, 3]]);
         }
 
         // Si une DLR personnalisée est demandée par l'utilisateur
@@ -69,7 +69,7 @@ final class ExportPEC extends Command
                 // Récupération du dossier lié à la consultation
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
-                if (3 === $consultation['nomEtatConsultation']['idNom'] && 'to_export' !== $dossier['STATUT_PEC']) {
+                if (\in_array($consultation['nomEtatConsultation']['idNom'], [2, 3]) && 'to_export' !== $dossier['STATUT_PEC']) {
                     continue;
                 }
 
