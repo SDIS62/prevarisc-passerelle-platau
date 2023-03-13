@@ -68,6 +68,10 @@ final class ExportAvis extends Command
                 // Récupération du dossier dans Prevarisc
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
+                if (6 === $consultation['nomEtatConsultation']['idNom'] && 'to_export' !== $dossier['STATUT_AVIS']) {
+                    continue;
+                }
+
                 // On recherche les prescriptions associées au dossier Prevarisc
                 $prescriptions = $this->prevarisc_service->getPrescriptions($dossier['ID_DOSSIER']);
 

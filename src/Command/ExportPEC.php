@@ -69,6 +69,10 @@ final class ExportPEC extends Command
                 // Récupération du dossier lié à la consultation
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
+                if (3 === $consultation['nomEtatConsultation']['idNom'] && 'to_export' !== $dossier['STATUT_PEC']) {
+                    continue;
+                }
+
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
                 $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
 
