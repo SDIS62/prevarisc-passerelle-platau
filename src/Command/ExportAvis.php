@@ -78,11 +78,6 @@ final class ExportAvis extends Command
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
                 $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
 
-                $informations_renvoi = [
-                    'statut' => $dossier['STATUT_AVIS'],
-                    'date'   => $dossier['DATE_AVIS'],
-                ];
-
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
                 if ('1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === (string) $dossier['AVIS_DOSSIER_COMMISSION']) {
                     // On verse l'avis de commission dans Plat'AU
@@ -90,7 +85,7 @@ final class ExportAvis extends Command
                     $est_favorable = '1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'];
                     $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
 
-                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, $informations_renvoi);
+                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, $dossier['STATUT_AVIS'], $dossier['DATE_AVIS']);
                     $this->prevarisc_service
                         ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')
                         ->set('DATE_AVIS', ':date_avis')

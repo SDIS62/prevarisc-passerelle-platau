@@ -76,16 +76,11 @@ final class ExportPEC extends Command
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
                 $pieces = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
 
-                $informations_renvoi = [
-                    'statut' => $dossier['STATUT_PEC'],
-                    'date'   => $dossier['DATE_PEC'],
-                ];
-
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
 
-                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces, $informations_renvoi);
+                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces, $dossier['STATUT_PEC'], $dossier['DATE_PEC']);
                     $this->prevarisc_service
                         ->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')
                         ->set('DATE_PEC', ':date_pec')
@@ -101,7 +96,7 @@ final class ExportPEC extends Command
                 } elseif ('0' === (string) $dossier['INCOMPLET_DOSSIER']) {
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
 
-                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces, $informations_renvoi);
+                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces, $dossier['STATUT_PEC'], $dossier['DATE_PEC']);
                     $this->prevarisc_service
                         ->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')
                         ->set('DATE_PEC', ':date_pec')
