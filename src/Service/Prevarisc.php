@@ -15,6 +15,11 @@ class Prevarisc
     private int $user_platau_id;
     private Flysystem\Filesystem $filesystem;
 
+    public const NECESSARY_TABLES = [
+        'piecejointestatut',
+        'platauconsultation',
+    ];
+
     /**
      * Construction du service Prevarisc en lui donnant une connexion SQL.
      */
@@ -89,7 +94,8 @@ class Prevarisc
     {
         return \in_array('ID_PLATAU', array_map(function (Column $column) {
             return $column->getName();
-        }, $this->db->getSchemaManager()->listTableColumns('dossier'))) && Utils::containsNecessaryTables($this->db);
+        }, $this->db->getSchemaManager()->listTableColumns('dossier'))) &&
+        \count(array_intersect($this->db->createSchemaManager()->listTableNames(), self::NECESSARY_TABLES)) === \count(self::NECESSARY_TABLES);
     }
 
     /**
@@ -348,7 +354,7 @@ class Prevarisc
      */
     public function recupererFichierPhysique(int $piece_jointe_id, string $piece_jointe_extension) : string
     {
-        return $this->filesystem->read("${piece_jointe_id}${piece_jointe_extension}");
+        return $this->filesystem->read("{$piece_jointe_id}{$piece_jointe_extension}");
     }
 
     /**
