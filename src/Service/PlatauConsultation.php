@@ -24,11 +24,11 @@ final class PlatauConsultation extends PlatauAbstract
             ],
         ]);
 
-        // On limite le nombre de consultations retournées à 50
-        $paginator->setMaxPerPage(50);
+        $consultations = [];
 
-        // On parse l'ensemble des consultations de la recherche
-        $consultations = array_map(fn ($consultation) => $this->parseConsultation($consultation), (array) $paginator->getCurrentPageResults());
+        foreach($paginator->autoPagingIterator() as $consultation) {
+            $consultations[] = $this->parseConsultation($consultation);
+        }
 
         return $consultations;
     }
