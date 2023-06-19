@@ -62,6 +62,8 @@ final class ExportAvis extends Command
         foreach ($consultations_en_attente_davis as $consultation) {
             // Récupération de l'ID de la consultation
             $consultation_id = $consultation['idConsultation'];
+            $prescriptions   = [];
+            $pieces          = [];
 
             // On essaie d'envoyer l'avis sur Plat'AU
             try {

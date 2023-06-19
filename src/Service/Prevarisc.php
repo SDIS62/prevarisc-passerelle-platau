@@ -45,6 +45,8 @@ class Prevarisc
 
     /**
      * Récupération dans Prevarisc d'un dossier Plat'AU.
+     *
+     * @throws Exception
      */
     public function recupererDossierDeConsultation(string $consultation_id) : array
     {

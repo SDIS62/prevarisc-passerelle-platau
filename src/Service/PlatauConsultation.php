@@ -34,7 +34,7 @@ final class PlatauConsultation extends PlatauAbstract
 
         $consultations = [];
 
-        foreach($paginator->autoPagingIterator() as $consultation) {
+        foreach ($paginator->autoPagingIterator() as $consultation) {
             $consultations[] = $this->parseConsultation($consultation);
         }
 
