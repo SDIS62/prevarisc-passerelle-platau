@@ -63,6 +63,7 @@ final class ExportPEC extends Command
         foreach ($consultations_en_attente_de_pec as $consultation) {
             // Récupération de l'ID de la consultation
             $consultation_id = $consultation['idConsultation'];
+            $pieces          = [];
 
             // On essaie d'envoyer la PEC
             try {
@@ -113,6 +114,13 @@ final class ExportPEC extends Command
                     $output->writeln("Impossible d'envoyer une PEC pour la consultation $consultation_id pour le moment (en attente de l'indication de complétude du dossier dans Prevarisc) ...");
                 }
             } catch (Exception $e) {
+                foreach ($pieces as $piece) {
+                    if ('on_error' === $piece['NOM_STATUT']) {
+                        continue;
+                    }
+
+                    $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'to_be_exported');
+                }
                 $this->prevarisc_service
                     ->setMetadonneesEnvoi($consultation_id, 'PEC', 'in_error')
                     ->executeStatement()
