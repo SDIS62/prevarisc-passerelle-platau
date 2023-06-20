@@ -32,11 +32,10 @@ final class PlatauPiece extends PlatauAbstract
         $documents = [];
 
         foreach ($pieces as $piece) {
-            $file_contents = $this->prevarisc_service->recupererFichierPhysique($piece['ID_PIECEJOINTE'], $piece['EXTENSION_PIECEJOINTE']);
-            $file_name     = $piece['NOM_PIECEJOINTE'].$piece['EXTENSION_PIECEJOINTE'];
-
             try {
-                $file = $this->syncplicity_client->upload($file_contents, $file_name);
+                $file_contents = $this->prevarisc_service->recupererFichierPhysique($piece['ID_PIECEJOINTE'], $piece['EXTENSION_PIECEJOINTE']);
+                $file_name     = $piece['NOM_PIECEJOINTE'].$piece['EXTENSION_PIECEJOINTE'];
+                $file          = $this->syncplicity_client->upload($file_contents, $file_name);
                 $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'exported');
             } catch (Exception $e) {
                 $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'on_error');

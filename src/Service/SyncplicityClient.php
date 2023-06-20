@@ -68,7 +68,7 @@ class SyncplicityClient
     /**
      * Récupération des options de configuration.
      */
-    public function getConfig(): array
+    public function getConfig() : array
     {
         return $this->config;
     }
@@ -76,7 +76,7 @@ class SyncplicityClient
     /**
      * Lancement d'une requête vers Syncplicity.
      */
-    public function request(string $method, $uri = '', array $options = []): ResponseInterface
+    public function request(string $method, $uri = '', array $options = []) : ResponseInterface
     {
         // Suppression du leading slash car cela peut rentrer en conflit avec la base uri
         $uri = ltrim($uri, '/');
@@ -87,7 +87,7 @@ class SyncplicityClient
     /**
      * Upload d'un document.
      */
-    public function upload(string $file_contents, string $file_name): array
+    public function upload(string $file_contents, string $file_name) : array
     {
         // Si le fichier fait moins de 10mo, alors on lance un upload simple
         if ($this->getFileSize($file_contents) < 10 * 10 ** 6) {
@@ -179,7 +179,7 @@ class SyncplicityClient
         ];
     }
 
-    public static function getFileSize(string $file_contents): int|false
+    public static function getFileSize(string $file_contents) : int|false
     {
         return false === mb_detect_encoding($file_contents, strict: true) ? strlen($file_contents) : \mb_strlen($file_contents);
     }

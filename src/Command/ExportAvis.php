@@ -100,9 +100,13 @@ final class ExportAvis extends Command
                     $output->writeln("Impossible d'envoyer un avis pour la consultation $consultation_id pour le moment (en attente de l'avis de commission dans Prevarisc) ...");
                 }
             } catch (Exception $e) {
-                array_map(function ($piece) {
+                foreach ($pieces as $piece) {
+                    if ('on_error' === $piece['NOM_STATUT']) {
+                        continue;
+                    }
+
                     $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'to_be_exported');
-                }, $pieces);
+                }
                 $this->prevarisc_service
                     ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_error')
                     ->executeStatement()
