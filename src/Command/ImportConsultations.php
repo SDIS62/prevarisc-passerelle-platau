@@ -14,6 +14,11 @@ use App\Service\PlatauNotification as PlatauNotificationService;
 
 final class ImportConsultations extends Command
 {
+    private PrevariscService $prevarisc_service;
+    private PlatauConsultationService $consultation_service;
+    private PlatauActeurService $acteur_service;
+    private PlatauNotificationService $notification_service;
+
     /**
      * Initialisation de la commande.
      */
@@ -75,6 +80,10 @@ final class ImportConsultations extends Command
 
                 // Versement de la consultation dans Prevarisc
                 $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
+                $this->prevarisc_service
+                    ->setMetadonneesEnvoi($consultation_id, 'PEC', 'awaiting')
+                    ->executeStatement()
+                ;
 
                 // La consultation est importée !
                 $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");

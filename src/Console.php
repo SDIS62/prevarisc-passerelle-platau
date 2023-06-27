@@ -4,6 +4,7 @@ namespace App;
 
 use UMA\DIC\Container;
 use Symfony\Component\Console\Application;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class Console extends Application
 {
@@ -15,10 +16,19 @@ final class Console extends Application
         // Construction de l'application console
         parent::__construct('Passerelle Prevarisc PlatAU', $version);
 
+        // On cadre les options que la passerelle attend (les requis, et les optionnels)
+        $resolver = new OptionsResolver();
+        $resolver->setRequired(['prevarisc.options', 'platau.options']);
+        $resolver->setDefaults(['syncplicity.options' => null]);
+        $config = $resolver->resolve($config);
+
         // Création d'un Container PSR-11 pour exposer des objets / configurations de façon standardisée
         $container = new Container();
         $container->register(new ServiceProvider\Prevarisc($config['prevarisc.options']));
         $container->register(new ServiceProvider\Platau($config['platau.options']));
+        if (null !== $config['syncplicity.options']) {
+            $container->register(new ServiceProvider\Syncplicity($config['syncplicity.options']));
+        }
 
         // Enregistrement des commandes disponibles
         $this->add(new Command\Healthcheck($container->get('service.platau.healthcheck'), $container->get('service.prevarisc')));

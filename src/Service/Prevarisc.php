@@ -7,9 +7,19 @@ use Exception;
 use League\Flysystem;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class Prevarisc
 {
+    private Connection $db;
+    private int $user_platau_id;
+    private Flysystem\Filesystem $filesystem;
+
+    public const NECESSARY_TABLES = [
+        'piecejointestatut',
+        'platauconsultation',
+    ];
+
     /**
      * Construction du service Prevarisc en lui donnant une connexion SQL.
      */
@@ -35,13 +45,19 @@ class Prevarisc
 
     /**
      * Récupération dans Prevarisc d'un dossier Plat'AU.
+     *
+     * @throws Exception
      */
     public function recupererDossierDeConsultation(string $consultation_id) : array
     {
         $dossier = $this->db->createQueryBuilder()
-            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION')
+            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION', 'STATUT_PEC', 'DATE_PEC', 'STATUT_AVIS', 'DATE_AVIS')
             ->from('dossier')
-            ->where('ID_PLATAU = ?')->setParameter(0, $consultation_id)->execute()->fetch();
+            ->leftJoin('dossier', 'platauconsultation', 'platauconsultation', 'dossier.ID_PLATAU = platauconsultation.ID_PLATAU')
+            ->where('dossier.ID_PLATAU = ?')
+            ->setParameter(0, $consultation_id)
+            ->execute()->fetch()
+        ;
 
         // Si la requête vers la base de donnée n'a rien donné, alors on lève une exception.
         if (empty($dossier)) {
@@ -80,7 +96,8 @@ class Prevarisc
     {
         return \in_array('ID_PLATAU', array_map(function (Column $column) {
             return $column->getName();
-        }, $this->db->getSchemaManager()->listTableColumns('dossier')));
+        }, $this->db->getSchemaManager()->listTableColumns('dossier'))) &&
+        \count(array_intersect($this->db->createSchemaManager()->listTableNames(), self::NECESSARY_TABLES)) === \count(self::NECESSARY_TABLES);
     }
 
     /**
@@ -305,6 +322,110 @@ class Prevarisc
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Récupère les pièces jointes avec un statut d'envoi vers Plat'AU spécifique.
+     */
+    public function recupererPiecesAvecStatut(int $id_dossier, string $status) : array
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $query = $query_builder
+            ->select('pj.ID_PIECEJOINTE', 'pj.EXTENSION_PIECEJOINTE', 'pj.NOM_PIECEJOINTE', 'd.ID_PLATAU', 'pjs.NOM_STATUT')
+            ->from('piecejointe', 'pj')
+            ->leftJoin('pj', 'piecejointestatut', 'pjs', 'pjs.ID_PIECEJOINTESTATUT = pj.ID_PIECEJOINTESTATUT')
+            ->join('pj', 'dossierpj', 'dpj', 'dpj.ID_PIECEJOINTE = pj.ID_PIECEJOINTE')
+            ->join('dpj', 'dossier', 'd', 'd.ID_DOSSIER = dpj.ID_DOSSIER')
+            ->where(
+                $query_builder->expr()->and(
+                    $query_builder->expr()->eq('d.ID_DOSSIER', '?'),
+                    $query_builder->expr()->eq('pjs.NOM_STATUT', '?')
+                )
+            )
+            ->setParameter(0, $id_dossier)
+            ->setParameter(1, $status)
+            ->executeQuery()
+        ;
+
+        return $query->fetchAllAssociative();
+    }
+
+    /**
+     * Récupère la pièce jointe sur le serveur.
+     */
+    public function recupererFichierPhysique(int $piece_jointe_id, string $piece_jointe_extension) : string
+    {
+        return $this->filesystem->read("{$piece_jointe_id}{$piece_jointe_extension}");
+    }
+
+    /**
+     * Modifie le statut d'envoi vers Plat'AU de la pièce.
+     */
+    public function changerStatutPiece(int $piece_jointe_id, string $statut) : void
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $id_statut = $query_builder
+            ->select('ID_PIECEJOINTESTATUT')
+            ->from('piecejointestatut')
+            ->where(
+                $query_builder->expr()->eq('NOM_STATUT', '?')
+            )
+            ->setParameter(0, $statut)
+            ->executeQuery()
+            ->fetchOne()
+        ;
+
+        if (false === $id_statut) {
+            return;
+        }
+
+        $query_builder
+            ->update('piecejointe', 'pj')
+            ->set('ID_PIECEJOINTESTATUT', $id_statut)
+            ->where(
+                $query_builder->expr()->eq('ID_PIECEJOINTE', '?')
+            )
+            ->setParameter(0, $piece_jointe_id)
+            ->executeStatement()
+        ;
+    }
+
+    public function setMetadonneesEnvoi(string $consultation_id, string $objet_metier, string $statut) : QueryBuilder
+    {
+        $query_builder_select = $this->db->createQueryBuilder();
+        $query_builder        = $this->db->createQueryBuilder();
+
+        $consultation_metadonnees = $query_builder_select
+            ->select('ID_PLATAU')
+            ->from('platauconsultation')
+            ->where(
+                $query_builder_select->expr()->eq('ID_PLATAU', '?')
+            )
+            ->setParameter(0, $consultation_id)
+            ->executeQuery()
+        ;
+
+        if (false === $consultation_metadonnees->fetchOne()) {
+            $query_builder
+                ->insert('platauconsultation')
+                ->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation_id))
+                ->setValue(sprintf('STATUT_%s', $objet_metier), $query_builder->createPositionalParameter($statut))
+            ;
+
+            return $query_builder;
+        }
+
+        $query_builder
+            ->update('platauconsultation')
+            ->set(sprintf('STATUT_%s', $objet_metier), ':statut')
+            ->where('ID_PLATAU = :id')
+            ->setParameter('statut', $statut)
+            ->setParameter('id', $consultation_id)
+        ;
+
+        return $query_builder;
     }
 
     /**
