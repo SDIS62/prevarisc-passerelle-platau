@@ -106,9 +106,9 @@ final class PlatauConsultation extends PlatauAbstract
             $type_date_limite_reponse = $consultation['nomTypeDelai']['libNom'];
             switch ($type_date_limite_reponse) {
                 case 'Jours calendaires': $date_limite_reponse_interval = new DateInterval("P{$delai_reponse}D");
-                    break;
+                break;
                 case 'Mois': $date_limite_reponse_interval              = new DateInterval("P{$delai_reponse}M");
-                    break;
+                break;
                 default: throw new Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
             }
         }
