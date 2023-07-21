@@ -401,17 +401,19 @@ class Prevarisc
             ->select('ID_PLATAU')
             ->from('platauconsultation')
             ->where(
-                $query_builder_select->expr()->eq('ID_PLATAU', '?')
+                $query_builder_select->expr()->eq('ID_PLATAU', ':id')
             )
-            ->setParameter(0, $consultation_id)
+            ->setParameter('id', $consultation_id)
             ->executeQuery()
         ;
 
         if (false === $consultation_metadonnees->fetchOne()) {
             $query_builder
                 ->insert('platauconsultation')
-                ->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation_id))
-                ->setValue(sprintf('STATUT_%s', $objet_metier), $query_builder->createPositionalParameter($statut))
+                ->setValue('ID_PLATAU', ':id')
+                ->setValue(sprintf('STATUT_%s', $objet_metier), ':statut')
+                ->setParameter('id', $consultation_id)
+                ->setParameter('statut', $statut)
             ;
 
             return $query_builder;

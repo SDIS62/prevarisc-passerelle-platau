@@ -90,7 +90,7 @@ final class ExportAvis extends Command
                     $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, $dossier['STATUT_AVIS'], $dossier['DATE_AVIS']);
                     $this->prevarisc_service
                         ->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')
-                        ->set('DATE_AVIS', ':date_avis')
+                        ->setValue('DATE_AVIS', ':date_avis')
                         ->setParameter('date_avis', date('Y-m-d'))
                         ->executeStatement()
                     ;
