@@ -4,7 +4,6 @@ namespace App\Service;
 
 use GuzzleHttp\Utils;
 use GuzzleHttp\Middleware;
-use Pagerfanta\Pagerfanta;
 use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleRetry\GuzzleRetryMiddleware;
@@ -19,7 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 abstract class PlatauAbstract
 {
     public const PLATAU_URL             = 'https://api.aife.economie.gouv.fr/mtes/platau/v9/';
-    public const PISTE_ACCESS_TOKEN_URL = 'https://oauth.aife.economie.gouv.fr/api/oauth/token';
+    public const PISTE_ACCESS_TOKEN_URL = 'https://oauth.piste.gouv.fr/api/oauth/token';
 
     private HttpClient $http_client;
     private array $config;
@@ -133,7 +132,7 @@ abstract class PlatauAbstract
      *   - /consultations/recherche
      *   - /dossiers/recherche
      */
-    protected function pagination(string $method, string $uri = '', array $options = []) : Pagerfanta
+    protected function pagination(string $method, string $uri = '', array $options = []) : PlatauCollection
     {
         $adapter = new CallbackAdapter(
             // A callable to count the number items in the list
@@ -177,6 +176,6 @@ abstract class PlatauAbstract
             }
         );
 
-        return new Pagerfanta($adapter);
+        return new PlatauCollection($adapter);
     }
 }
