@@ -22,6 +22,7 @@ abstract class PlatauAbstract
 
     private HttpClient $http_client;
     private array $config;
+    private ?SyncplicityClient $syncplicity;
 
     /**
      * Création d'une nouvelle instance d'un service Platau.
@@ -34,7 +35,7 @@ abstract class PlatauAbstract
      * - PLATAU_URL
      * - PISTE_ACCESS_TOKEN_URL
      **/
-    public function __construct(array $config = [])
+    final public function __construct(array $config = [])
     {
         // Gestion des options de configuration.
         // (OptionsResolver allows to create an options system with required options, defaults, validation (type, value), normalization and more)
@@ -92,6 +93,22 @@ abstract class PlatauAbstract
             'auth'     => 'oauth',
             'headers'  => $headers,
         ]);
+    }
+
+    /**
+     * Active le service Syncplicity pour l'upload de document
+     */
+    public function enableSyncplicity(SyncplicityClient $client) : void
+    {
+        $this->syncplicity = $client;
+    }
+
+    /**
+     * Récupération du client Syncplicity
+     */
+    public function getSyncplicity() : ?SyncplicityClient
+    {
+        return $this->syncplicity;
     }
 
     /**

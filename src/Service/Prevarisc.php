@@ -94,10 +94,42 @@ class Prevarisc
      */
     public function estCompatible() : bool
     {
-        return \in_array('ID_PLATAU', array_map(function (Column $column) {
-            return $column->getName();
-        }, $this->db->getSchemaManager()->listTableColumns('dossier'))) &&
-        \count(array_intersect($this->db->createSchemaManager()->listTableNames(), self::NECESSARY_TABLES)) === \count(self::NECESSARY_TABLES);
+        return 
+            // Colonne 'ID_PLATAU' dans la table 'dossiers'
+            (
+                \in_array('ID_PLATAU', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+            ) &&
+            // Colonne 'STATUT_PEC' dans la table 'dossiers'
+            (
+                \in_array('STATUT_PEC', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+            ) &&
+            // Colonne 'DATE_PEC' dans la table 'dossiers'
+            (
+                \in_array('DATE_PEC', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+            ) &&
+            // Colonne 'STATUT_AVIS' dans la table 'dossiers'
+            (
+                \in_array('STATUT_AVIS', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+            ) &&
+            // Colonne 'DATE_AVIS' dans la table 'dossiers'
+            (
+                \in_array('DATE_AVIS', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+            ) &&
+            // Présence de la table 'piecejointestatut'
+            (in_array('piecejointestatut', $this->db->createSchemaManager()->listTableNames())) &&
+            // Présence de la table 'platauconsultation'
+            (in_array('platauconsultation', $this->db->createSchemaManager()->listTableNames()))
+            ;
     }
 
     /**
@@ -326,6 +358,7 @@ class Prevarisc
 
     /**
      * Récupère les pièces jointes avec un statut d'envoi vers Plat'AU spécifique.
+     * Le statut peut être : on_error ; not_exported ; to_be_exported ; exported.
      */
     public function recupererPiecesAvecStatut(int $id_dossier, string $status) : array
     {
@@ -361,6 +394,7 @@ class Prevarisc
 
     /**
      * Modifie le statut d'envoi vers Plat'AU de la pièce.
+     * Le statut peut être : on_error ; not_exported ; to_be_exported ; exported.
      */
     public function changerStatutPiece(int $piece_jointe_id, string $statut) : void
     {
@@ -378,7 +412,7 @@ class Prevarisc
         ;
 
         if (false === $id_statut) {
-            return;
+            throw new Exception("Statut $statut inconnu");
         }
 
         $query_builder
@@ -392,6 +426,11 @@ class Prevarisc
         ;
     }
 
+    /**
+     * Mise à jour des métadonnées de la consultation.
+     * Objet métier : AVIS ; Statut : unknown ; in_progress ; treated ; to_export ; in_error
+     * Objet métier : PEC ; Statut : unknown ; awaiting ; taken_into_account ; to_export ; in_error
+     */
     public function setMetadonneesEnvoi(string $consultation_id, string $objet_metier, string $statut) : QueryBuilder
     {
         $query_builder_select = $this->db->createQueryBuilder();
@@ -418,6 +457,24 @@ class Prevarisc
 
             return $query_builder;
         }
+
+        /*
+            Les statuts AVIS : 
+            ------------------
+            INCONNU = 'unknown';
+            EN_COURS = 'in_progress';
+            TRAITE = 'treated';
+            A_RENVOYER = 'to_export';
+            EN_ERREUR = 'in_error';
+
+            Les statits PEC :
+            -----------------
+            INCONNU = 'unknown';
+            EN_ATTENTE = 'awaiting';
+            PRISE_EN_COMPTE = 'taken_into_account';
+            A_RENVOYER = 'to_export';
+            EN_ERREUR = 'in_error';
+        */
 
         $query_builder
             ->update('platauconsultation')

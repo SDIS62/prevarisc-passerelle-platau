@@ -3,6 +3,7 @@
 namespace App\ServiceProvider;
 
 use App\Service;
+use App\Service\SyncplicityClient;
 use UMA\DIC\Container;
 use UMA\DIC\ServiceProvider;
 
@@ -21,7 +22,13 @@ final class Platau implements ServiceProvider
      */
     public function provide(Container $container) : void
     {
-        $client = new Service\PlatauClient($this->config, $container);
+        $client = new Service\PlatauClient($this->config);
+
+        if($container->has(Service\SyncplicityClient::class)) {
+            $syncplicity = $container->get(Service\SyncplicityClient::class);
+            assert($syncplicity instanceof SyncplicityClient);
+            $client->enableSyncplicity($syncplicity);
+        }
 
         // Création des services Plat'AU
         $container->set('service.platau.consultation', fn () => $client->consultations);
