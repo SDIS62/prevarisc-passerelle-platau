@@ -21,8 +21,8 @@ final class Syncplicity implements ServiceProvider
     /**
      * Setup PSR11 container's configuration from environment variables.
      */
-    public function provide(Container $container) : void
+    public function provide(Container $c) : void
     {
-        $container->set(Service\SyncplicityClient::class, fn () => new Service\SyncplicityClient($this->config));
+        $c->set(Service\SyncplicityClient::class, fn () => new Service\SyncplicityClient($this->config));
     }
 }
