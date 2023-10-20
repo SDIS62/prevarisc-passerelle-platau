@@ -79,12 +79,15 @@ final class ExportAvis extends Command
                 $prescriptions = $this->prevarisc_service->getPrescriptions($dossier['ID_DOSSIER']);
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = array_map(function ($piece_jointe) {
-                    $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
-                    $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
+                $pieces = [];
+                if ($this->piece_service->getSyncplicity()) {
+                    $pieces = array_map(function ($piece_jointe) {
+                        $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
+                        $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
 
-                    return $this->piece_service->uploadDocument($filename, $contents, 9); // Type de document 9 = Document lié à un avis
-                }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
+                        return $this->piece_service->uploadDocument($filename, $contents, 9); // Type de document 9 = Document lié à un avis
+                    }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
+                }
 
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
                 if ('1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === (string) $dossier['AVIS_DOSSIER_COMMISSION']) {

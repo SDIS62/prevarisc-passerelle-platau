@@ -75,12 +75,15 @@ final class ExportPEC extends Command
                 }
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = array_map(function ($piece_jointe) {
-                    $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
-                    $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
+                $pieces = [];
+                if ($this->piece_service->getSyncplicity()) {
+                    $pieces = array_map(function ($piece_jointe) {
+                        $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
+                        $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
 
-                    return $this->piece_service->uploadDocument($filename, $contents, 6); // Type document 6 = Demande de pièces complémentaires
-                }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
+                        return $this->piece_service->uploadDocument($filename, $contents, 6); // Type document 6 = Demande de pièces complémentaires
+                    }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
+                }
 
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
@@ -111,6 +114,7 @@ final class ExportPEC extends Command
                         $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'to_be_exported');
                     }
                 }
+
                 // On passe la PEC en erreur d'envoi
                 $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'in_error')->executeStatement();
 
