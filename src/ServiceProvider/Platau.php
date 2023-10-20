@@ -3,9 +3,9 @@
 namespace App\ServiceProvider;
 
 use App\Service;
-use App\Service\SyncplicityClient;
 use UMA\DIC\Container;
 use UMA\DIC\ServiceProvider;
+use App\Service\SyncplicityClient;
 
 final class Platau implements ServiceProvider
 {
@@ -26,9 +26,9 @@ final class Platau implements ServiceProvider
     {
         $client = new Service\PlatauClient($this->config);
 
-        if($c->has(Service\SyncplicityClient::class)) {
+        if ($c->has(Service\SyncplicityClient::class)) {
             $syncplicity = $c->get(Service\SyncplicityClient::class);
-            assert($syncplicity instanceof SyncplicityClient);
+            \assert($syncplicity instanceof SyncplicityClient);
             $client->enableSyncplicity($syncplicity);
         }
 

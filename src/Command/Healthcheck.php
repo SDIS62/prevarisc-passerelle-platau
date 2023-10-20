@@ -2,7 +2,6 @@
 
 namespace App\Command;
 
-use Exception;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -39,17 +38,17 @@ final class Healthcheck extends Command
     {
         // On vérifie la santé de Plat'AU
         if (true !== $this->healthcheck_service->healthcheck()) {
-            throw new Exception("Plat'AU non fonctionnel actuellement.");
+            throw new \Exception("Plat'AU non fonctionnel actuellement.");
         }
 
         // On va maintenant tester la connexion à la base de données Prevarisc
         if (!$this->prevarisc_service->estDisponible()) {
-            throw new Exception('Base de données Prevarisc déconnectée.');
+            throw new \Exception('Base de données Prevarisc déconnectée.');
         }
 
         // On vérifie que la base de données Prevarisc est compatible avec Plat'AU
         if (!$this->prevarisc_service->estCompatible()) {
-            throw new Exception('Base de données Prevarisc incompatible. Avez-vous pensé à la mise à jour ?');
+            throw new \Exception('Base de données Prevarisc incompatible. Avez-vous pensé à la mise à jour ?');
         }
 
         $output->writeln('RAS. Tout est disponible et prêt à l\'emploi !');

@@ -2,7 +2,6 @@
 
 namespace App\Command;
 
-use Exception;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -84,7 +83,7 @@ final class ImportConsultations extends Command
 
                 // La consultation est importée !
                 $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
             }
         }

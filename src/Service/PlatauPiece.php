@@ -2,8 +2,6 @@
 
 namespace App\Service;
 
-use DateTime;
-use Exception;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface;
 
@@ -15,23 +13,23 @@ final class PlatauPiece extends PlatauAbstract
     public function uploadDocument(string $filename, string $file_contents, int $type_document) : array
     {
         $syncplicity = $this->getSyncplicity();
-        if($syncplicity === null) {
-            throw new Exception("Le client Syncplicity doit être activé pour poursuivre cette action.");
+        if (null === $syncplicity) {
+            throw new \Exception('Le client Syncplicity doit être activé pour poursuivre cette action.');
         }
 
         // On envoie le contenu du fichier dans Plat'AU via Syncplicity
         $file = $syncplicity->upload($file_contents, $filename);
 
         \assert(\array_key_exists('data_file_id', $file));
-        $syncplicity_file_id = $file['data_file_id'];
+        $syncplicity_file_id = (string) $file['data_file_id'];
 
         \assert(\array_key_exists('VirtualFolderId', $file));
-        $syncplicity_folder_id = $file['VirtualFolderId'];
+        $syncplicity_folder_id = (string) $file['VirtualFolderId'];
 
         $document = [
-            'fileId'               => (string) $syncplicity_file_id,
-            'folderId'             => (string) $syncplicity_folder_id,
-            'dtProduction'         => (new DateTime())->format('Y-m-d'),
+            'fileId'               => $syncplicity_file_id,
+            'folderId'             => $syncplicity_folder_id,
+            'dtProduction'         => (new \DateTime())->format('Y-m-d'),
             'idActeurProducteur'   => (string) $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
             'algoHash'             => 'SHA-512',
             'hash'                 => hash('sha512', $file_contents),
@@ -50,8 +48,8 @@ final class PlatauPiece extends PlatauAbstract
         // Création d'un client HTTP à part permettant de récupérer les fichiers Plat'AU
         $http_client = new HttpClient();
 
-        assert(\array_key_exists('url', $piece));
-        assert(\array_key_exists('token', $piece));
+        \assert(\array_key_exists('url', $piece));
+        \assert(\array_key_exists('token', $piece));
 
         // On lance la requête HTTP de récupération
         return $http_client->request('GET', (string) $piece['url'], [

@@ -2,15 +2,13 @@
 
 namespace App\Command;
 
-use Exception;
-use DateInterval;
+use App\Service\PlatauPiece;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use App\Service\PlatauConsultation as PlatauConsultationService;
-use App\Service\PlatauPiece;
 
 final class ExportPEC extends Command
 {
@@ -25,7 +23,7 @@ final class ExportPEC extends Command
     {
         $this->prevarisc_service    = $prevarisc_service;
         $this->consultation_service = $consultation_service;
-        $this->piece_service = $piece_service;
+        $this->piece_service        = $piece_service;
         parent::__construct();
     }
 
@@ -59,7 +57,7 @@ final class ExportPEC extends Command
         // Si une DLR personnalisée est demandée par l'utilisateur
         $delai_reponse = null;
         if ($input->getOption('delai-reponse')) {
-            $delai_reponse = new DateInterval("P{$input->getOption('delai-reponse')}D");
+            $delai_reponse = new \DateInterval("P{$input->getOption('delai-reponse')}D");
         }
 
         // Pour chaque consultation trouvée, on va chercher dans Prevarisc si la complétion (ou non) du dossier a été indiquée.
@@ -77,11 +75,12 @@ final class ExportPEC extends Command
                 }
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = array_map(function($piece_jointe) {
+                $pieces = array_map(function ($piece_jointe) {
                     $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
                     $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
+
                     return $this->piece_service->uploadDocument($filename, $contents, 6); // Type document 6 = Demande de pièces complémentaires
-                }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported')); 
+                }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
 
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
@@ -105,7 +104,7 @@ final class ExportPEC extends Command
                 } else {
                     $output->writeln("Impossible d'envoyer une PEC pour la consultation $consultation_id pour le moment (en attente de l'indication de complétude du dossier dans Prevarisc) ...");
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 // On passe les pièces jointes en attente de versement
                 foreach ($pieces as $piece) {
                     if ('on_error' !== $piece['NOM_STATUT']) {
@@ -114,7 +113,7 @@ final class ExportPEC extends Command
                 }
                 // On passe la PEC en erreur d'envoi
                 $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'in_error')->executeStatement();
-                
+
                 $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
             }
         }

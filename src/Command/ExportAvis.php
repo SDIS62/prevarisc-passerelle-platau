@@ -2,14 +2,13 @@
 
 namespace App\Command;
 
-use Exception;
+use App\Service\PlatauPiece;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use App\Service\PlatauConsultation as PlatauConsultationService;
-use App\Service\PlatauPiece;
 
 final class ExportAvis extends Command
 {
@@ -24,7 +23,7 @@ final class ExportAvis extends Command
     {
         $this->prevarisc_service    = $prevarisc_service;
         $this->consultation_service = $consultation_service;
-        $this->piece_service = $piece_service;
+        $this->piece_service        = $piece_service;
         parent::__construct();
     }
 
@@ -45,7 +44,7 @@ final class ExportAvis extends Command
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
         // Si l'utilisateur demande de traiter une consultation en particulier, on s'occupe de celle là.
-        // Sinon, l'utilisateur demande de traiter les consultations en attente d'avis 
+        // Sinon, l'utilisateur demande de traiter les consultations en attente d'avis
         // Sinon on récupère dans Plat'AU l'ensemble des consultations en attente d'avis (c'est à dire avec un état "Prise en compte - en cours de traitement") et celle déjà traitées
         if ($input->getOption('consultation-id')) {
             $output->writeln('Récupération de la consultation concernée ...');
@@ -80,11 +79,12 @@ final class ExportAvis extends Command
                 $prescriptions = $this->prevarisc_service->getPrescriptions($dossier['ID_DOSSIER']);
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = array_map(function($piece_jointe) {
+                $pieces = array_map(function ($piece_jointe) {
                     $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
                     $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
+
                     return $this->piece_service->uploadDocument($filename, $contents, 9); // Type de document 9 = Document lié à un avis
-                }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported')); 
+                }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
 
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
                 if ('1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'] || '2' === (string) $dossier['AVIS_DOSSIER_COMMISSION']) {
@@ -99,7 +99,7 @@ final class ExportAvis extends Command
                 } else {
                     $output->writeln("Impossible d'envoyer un avis pour la consultation $consultation_id pour le moment (en attente de l'avis de commission dans Prevarisc) ...");
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 // On passe toutes les pièces en attente de versement
                 foreach ($pieces as $piece) {
                     if ('on_error' !== $piece['NOM_STATUT']) {

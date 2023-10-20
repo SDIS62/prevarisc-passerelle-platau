@@ -2,10 +2,6 @@
 
 namespace App\Service;
 
-use Datetime;
-use Exception;
-use DateInterval;
-
 final class PlatauConsultation extends PlatauAbstract
 {
     /**
@@ -26,7 +22,8 @@ final class PlatauConsultation extends PlatauAbstract
 
         $consultations = [];
 
-        foreach($paginator->autoPagingIterator() as $consultation) {
+        foreach ($paginator->autoPagingIterator() as $consultation) {
+            \assert(\is_array($consultation));
             $consultations[] = $this->parseConsultation($consultation);
         }
 
@@ -43,11 +40,13 @@ final class PlatauConsultation extends PlatauAbstract
 
         // Si la liste des consultations est vide, alors on lève une erreur (la recherche n'a rien donné)
         if (empty($consultations)) {
-            throw new Exception("la consultation $consultation_id est introuvable selon les critères de recherche");
+            throw new \Exception("la consultation $consultation_id est introuvable selon les critères de recherche");
         }
 
         // On vient récupérer la consultation qui nous interesse dans le tableau des résultats
-        $consultation  = array_shift($consultations);
+        $consultation = array_shift($consultations);
+
+        \assert(\is_array($consultation));
 
         return $consultation;
     }
@@ -60,11 +59,15 @@ final class PlatauConsultation extends PlatauAbstract
         // On recherche la consultation associée pour récupérer le dossier lié
         $consultation = $this->getConsultation($consultation_id);
 
+        $dossier_id = (string) $consultation['dossier']['idDossier'];
+
         // On recherche maintenant l'ensemble des pièces liées au dossier
-        $response = $this->request('get', 'dossiers/'.$consultation['dossier']['idDossier'].'/pieces');
+        $response = $this->request('get', 'dossiers/'.$dossier_id.'/pieces');
 
         // On vient récupérer les pièces qui nous interesse dans la réponse des résultats de recherche
-        $pieces = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+        $pieces = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
+
+        \assert(\is_array($pieces));
 
         return $pieces;
     }
@@ -77,8 +80,8 @@ final class PlatauConsultation extends PlatauAbstract
         // On vient récupérer les détails de la consultation recherchée, qui, pour une raison étrange, se trouvent
         // dans un tableau de consultations auxquelles le dossier lié est rattaché.
         // Pour que ce soit plus logique, on les place au même niveau que 'projet' et 'dossier'.
-        $consultation_id = $consultation['dossier']['consultations'][0]['idConsultation'];
-        $consultation    = array_merge($consultation, current(array_filter($consultation['dossier']['consultations'], fn ($c) => $c['idConsultation'] === $consultation_id)));
+        $consultation_id = (string) $consultation['dossier']['consultations'][0]['idConsultation'];
+        $consultation    = array_merge($consultation, current(array_filter($consultation['dossier']['consultations'], fn (array $c) => $c['idConsultation'] === $consultation_id)));
 
         return $consultation;
     }
@@ -86,7 +89,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], ?Datetime $date_envoi) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], ?\DateTime $date_envoi) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -94,16 +97,18 @@ final class PlatauConsultation extends PlatauAbstract
         // Définition de la DLR à envoyer
         // Correspond à la date d'instruction donnée dans la consultation si aucune date limite est donnée
         if (null === $date_limite_reponse_interval) {
-            $delai_reponse            = $consultation['delaiDeReponse'];
-            $type_date_limite_reponse = $consultation['nomTypeDelai']['libNom'];
+            $delai_reponse            = (string) $consultation['delaiDeReponse'];
+            $type_date_limite_reponse = (string) $consultation['nomTypeDelai']['libNom'];
             switch ($type_date_limite_reponse) {
-                case 'Jours calendaires': $date_limite_reponse_interval = new DateInterval("P{$delai_reponse}D"); break;
-                case 'Mois': $date_limite_reponse_interval              = new DateInterval("P{$delai_reponse}M"); break;
-                default: throw new Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
+                case 'Jours calendaires': $date_limite_reponse_interval = new \DateInterval("P{$delai_reponse}D");
+                break;
+                case 'Mois': $date_limite_reponse_interval              = new \DateInterval("P{$delai_reponse}M");
+                break;
+                default: throw new \Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
             }
         }
 
-        $date_envoi = $date_envoi ?? (new Datetime());
+        $date_envoi          = $date_envoi ?? (new \DateTime());
         $date_limite_reponse = $date_envoi->add($date_limite_reponse_interval);
 
         // Envoie de la PEC dans Plat'AU
@@ -134,17 +139,19 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], ?Datetime $date_envoi) : void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], ?\DateTime $date_envoi) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée (dans les traitées et versées)
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3, 6]]);
 
         // Création du texte formulant l'avis
+        /** @var array<array-key, string> $libelles */
+        $libelles    = array_column($prescriptions, 'libelle');
         $description = vsprintf('Avis Prevarisc. Prescriptions données : %s', [
-            0 === \count($prescriptions) ? 'RAS' : implode(', ', array_column($prescriptions, 'libelle')),
+            0 === \count($prescriptions) ? 'RAS' : implode(', ', $libelles),
         ]);
 
-        $date_envoi = $date_envoi ?? (new Datetime());
+        $date_envoi = $date_envoi ?? (new \DateTime());
 
         // Versement d'un avis
         $this->request('post', 'avis', [
