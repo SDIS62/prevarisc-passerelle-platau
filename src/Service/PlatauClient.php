@@ -24,6 +24,7 @@ class PlatauClient extends PlatauAbstract
      */
     public function __get(string $name)
     {
+        /** @var class-string<PlatauAbstract>|null $class_name */
         $class_name = \array_key_exists($name, self::$class_map) ? self::$class_map[$name] : null;
 
         \assert(null !== $class_name, "Service $name inconnu");

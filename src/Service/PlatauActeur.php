@@ -26,20 +26,24 @@ final class PlatauActeur extends PlatauAbstract
         ]);
 
         // On décode le JSON nous permettant de récupérer les acteurs créés.
-        $acteurs_crees = json_decode($response->getBody(), true, 512, \JSON_THROW_ON_ERROR);
+        $acteurs_crees = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
+        \assert(\is_array($acteurs_crees));
 
         // On vérifie si la réponse donnée par Plat'AU contient bien des services consultables
         if (!\array_key_exists('servicesConsultables', $acteurs_crees) || empty($acteurs_crees['servicesConsultables'])) {
-            throw new Exception("L'enrôlement ne s'est pas correctement déroulé (absence de services consultables dans la réponse)");
+            throw new \Exception("L'enrôlement ne s'est pas correctement déroulé (absence de services consultables dans la réponse)");
         }
 
         // Récupération du service consultable créé
         $service_consultable_cree = array_shift($acteurs_crees['servicesConsultables']);
+        \assert(\is_array($service_consultable_cree));
         if (!\array_key_exists('idActeur', $service_consultable_cree)) {
-            throw new Exception("L'enrôlement ne s'est pas correctement passé (absence d'idActeur dans la réponse)");
+            throw new \Exception("L'enrôlement ne s'est pas correctement passé (absence d'idActeur dans la réponse)");
         }
 
-        return $service_consultable_cree['idActeur'];
+        $acteur_id = (string) $service_consultable_cree['idActeur'];
+
+        return $acteur_id;
     }
 
     /**
@@ -57,12 +61,14 @@ final class PlatauActeur extends PlatauAbstract
         // Si il n'y à pas d'acteur, alors la recherche à été infructueuse, et ce n'est pas normal.
         // On lève donc une exception.
         if (0 === $acteurs->getNbResults()) {
-            throw new Exception("L'acteur $acteur_id n'existe pas.");
+            throw new \Exception("L'acteur $acteur_id n'existe pas.");
         }
 
         // Récupération de l'acteur recherché
         $data   = (array) $acteurs->getCurrentPageResults();
         $acteur = array_shift($data);
+
+        \assert(\is_array($acteur));
 
         return $acteur;
     }

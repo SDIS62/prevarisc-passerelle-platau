@@ -2,14 +2,23 @@
 
 namespace App\Service;
 
-use Datetime;
 use Exception;
 use League\Flysystem;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class Prevarisc
 {
+    private Connection $db;
+    private int $user_platau_id;
+    private Flysystem\Filesystem $filesystem;
+
+    public const NECESSARY_TABLES = [
+        'piecejointestatut',
+        'platauconsultation',
+    ];
+
     /**
      * Construction du service Prevarisc en lui donnant une connexion SQL.
      */
@@ -35,17 +44,24 @@ class Prevarisc
 
     /**
      * Récupération dans Prevarisc d'un dossier Plat'AU.
+     *
+     * @throws \Exception
      */
     public function recupererDossierDeConsultation(string $consultation_id) : array
     {
-        $dossier = $this->db->createQueryBuilder()
-            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION')
+        $results = $this->db->createQueryBuilder()
+            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION', 'STATUT_PEC', 'DATE_PEC', 'STATUT_AVIS', 'DATE_AVIS')
             ->from('dossier')
-            ->where('ID_PLATAU = ?')->setParameter(0, $consultation_id)->execute()->fetch();
+            ->leftJoin('dossier', 'platauconsultation', 'platauconsultation', 'dossier.ID_PLATAU = platauconsultation.ID_PLATAU')
+            ->where('dossier.ID_PLATAU = ?')
+            ->setParameter(0, $consultation_id)
+            ->executeQuery();
+
+        $dossier = $results->fetchAssociative();
 
         // Si la requête vers la base de donnée n'a rien donné, alors on lève une exception.
         if (empty($dossier)) {
-            throw new Exception("La consultation $consultation_id n'existe pas dans Prevarisc.");
+            throw new \Exception("La consultation $consultation_id n'existe pas dans Prevarisc.");
         }
 
         return $dossier;
@@ -60,7 +76,7 @@ class Prevarisc
             $this->recupererDossierDeConsultation($consultation_id);
 
             return true;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return false;
         }
     }
@@ -70,6 +86,7 @@ class Prevarisc
      */
     public function estDisponible() : bool
     {
+        /* @psalm-suppress InternalMethod */
         return $this->db->connect();
     }
 
@@ -78,9 +95,42 @@ class Prevarisc
      */
     public function estCompatible() : bool
     {
-        return \in_array('ID_PLATAU', array_map(function (Column $column) {
-            return $column->getName();
-        }, $this->db->getSchemaManager()->listTableColumns('dossier')));
+        return
+            // Colonne 'ID_PLATAU' dans la table 'dossiers'
+
+                \in_array('ID_PLATAU', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+             &&
+            // Colonne 'STATUT_PEC' dans la table 'dossiers'
+
+                \in_array('STATUT_PEC', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+             &&
+            // Colonne 'DATE_PEC' dans la table 'dossiers'
+
+                \in_array('DATE_PEC', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+             &&
+            // Colonne 'STATUT_AVIS' dans la table 'dossiers'
+
+                \in_array('STATUT_AVIS', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+             &&
+            // Colonne 'DATE_AVIS' dans la table 'dossiers'
+
+                \in_array('DATE_AVIS', array_map(function (Column $column) {
+                    return $column->getName();
+                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+             &&
+            // Présence de la table 'piecejointestatut'
+            \in_array('piecejointestatut', $this->db->createSchemaManager()->listTableNames()) &&
+            // Présence de la table 'platauconsultation'
+            \in_array('platauconsultation', $this->db->createSchemaManager()->listTableNames())
+        ;
     }
 
     /**
@@ -106,7 +156,7 @@ class Prevarisc
             $query_builder->setValue('INCOMPLET_DOSSIER', 'NULL');
 
             // L'identifiant de l'utilisateur associé à Plat'AU est utilisé pour que le dossier soit créé par celui ci
-            $query_builder->setValue('CREATEUR_DOSSIER', $this->getIdUtilisateurPlatau());
+            $query_builder->setValue('CREATEUR_DOSSIER', (string) $this->getIdUtilisateurPlatau());
 
             // On associe le demandeur de Plat'AU
             $query_builder->setValue('DEMANDEUR_DOSSIER', $query_builder->createPositionalParameter(null !== $demandeur ? $demandeur['designationActeur'] : null));
@@ -116,8 +166,8 @@ class Prevarisc
             $query_builder->setValue('SERVICEINSTRUC_DOSSIER', $query_builder->createPositionalParameter(null !== $service_instructeur ? $service_instructeur['designationActeur'] : null));
 
             // On place des dates importantes dans Prevarisc
-            $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d H:i:s')));
-            $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d H:i:s')));
+            $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d H:i:s')));
+            $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d H:i:s')));
 
             // On associe la consultation Plat'AU avec le dossier créé
             $query_builder->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation['idConsultation']));
@@ -159,7 +209,7 @@ class Prevarisc
             $query_builder->setValue('LIEUREUNION_DOSSIER', 'NULL');
 
             // On exécute la requête d'insertion dans la base de données Prevarisc
-            $query_builder->execute();
+            $query_builder->executeStatement();
 
             // Une fois la requête exécutée, on récupère l'identifiant du dossier créé
             $dossier_id = $this->db->lastInsertId();
@@ -170,18 +220,18 @@ class Prevarisc
                 $query_builder_docurba->values([
                     'NUM_DOCURBA' => $query_builder_docurba->createPositionalParameter($consultation['dossier']['noLocal']),
                     'ID_DOSSIER'  => $dossier_id,
-                ])->execute();
+                ])->executeStatement();
             }
 
             // On lie la nature du dossier Plat'AU avec celui de Prevarisc (avec l'aide d'une table de correspondance)
             $this->db->createQueryBuilder()->insert('dossiernature')->values([
                 'ID_NATURE'  => $this->correspondanceNaturePrevarisc($consultation['dossier']['nomTypeDossier']['idNom']),
                 'ID_DOSSIER' => $dossier_id,
-            ])->execute();
+            ])->executeStatement();
 
             // On commit les changements
             $this->db->commit();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->db->rollBack();
             throw $e;
         }
@@ -198,7 +248,7 @@ class Prevarisc
     public function getPrescriptions(int $dossier_id) : array
     {
         // On lance une requête pour récupérer les prescriptions + prescriptions types d'un dossier
-        $prescriptions = $this->db->createQueryBuilder()
+        $results = $this->db->createQueryBuilder()
             ->select('prescriptiondossier.TYPE_PRESCRIPTION_DOSSIER', 'prescriptiondossier.LIBELLE_PRESCRIPTION_DOSSIER', 'prescriptiontype.PRESCRIPTIONTYPE_LIBELLE', 'article.LIBELLE_ARTICLE as ARTICLE', 'texte.LIBELLE_TEXTE as TEXTE', 'article_type.LIBELLE_ARTICLE as TYPE_ARTICLE', 'texte_type.LIBELLE_TEXTE as TYPE_TEXTE')
             ->from('prescriptiondossier')
             ->leftJoin('prescriptiondossier', 'prescriptiontype', 'prescriptiontype', 'prescriptiontype.ID_PRESCRIPTIONTYPE = prescriptiondossier.ID_PRESCRIPTION_TYPE')
@@ -208,7 +258,9 @@ class Prevarisc
             ->leftJoin('prescriptiondossier', 'prescriptiondossierassoc', 'prescriptiondossierassoc', 'prescriptiondossier.ID_PRESCRIPTION_DOSSIER = prescriptiondossierassoc.ID_PRESCRIPTION_DOSSIER')
             ->leftJoin('prescriptiondossier', 'prescriptionarticleliste', 'article', 'prescriptiondossierassoc.ID_ARTICLE = article.ID_ARTICLE')
             ->leftJoin('prescriptiondossier', 'prescriptiontexteliste', 'texte', 'prescriptiondossierassoc.ID_TEXTE = texte.ID_TEXTE')
-            ->where('prescriptiondossier.ID_DOSSIER = ?')->setParameter(0, $dossier_id)->execute()->fetchAll();
+            ->where('prescriptiondossier.ID_DOSSIER = ?')->setParameter(0, $dossier_id)->executeQuery();
+
+        $prescriptions = $results->fetchAllAssociative();
 
         // On parse les prescriptions
         $prescriptions = array_map(function ($prescription) {
@@ -231,7 +283,7 @@ class Prevarisc
         $query_builder = $this->db->createQueryBuilder();
 
         // Recherche de la pièce jointe dans un dossier Prevarisc
-        $piece_jointe = $query_builder
+        $result = $query_builder
             ->select('piecejointe.ID_PIECEJOINTE')
             ->from('piecejointe')
             ->leftJoin('piecejointe', 'dossierpj', 'dossierpj', 'piecejointe.ID_PIECEJOINTE = dossierpj.ID_PIECEJOINTE')
@@ -243,7 +295,11 @@ class Prevarisc
             )
             ->setParameter(0, $filename)
             ->setParameter(1, $dossier_id)
-            ->execute()->fetch();
+            ->executeQuery();
+
+        $piece_jointe = $result->fetchAssociative();
+
+        \assert(\is_array($piece_jointe));
 
         return !empty($piece_jointe);
     }
@@ -263,12 +319,12 @@ class Prevarisc
 
         // Génération de la description
         $description = vsprintf('%s v%s (Pièce %s avec un état %s. Elle a été déposée le %s et produite le %s.)', [
-            $piece['nomTypePiece']['libNom'].' '.$piece['libAutreTypePiece'],
+            (string) $piece['nomTypePiece']['libNom'].' '.(string) $piece['libAutreTypePiece'],
             $piece['noVersion'],
             $piece['nomNaturePiece']['libNom'],
             $piece['nomEtatPiece']['libNom'],
-            (new Datetime($piece['dtDepot']))->format('d/m/Y à H:i'),
-            (new Datetime($piece['dtProduction']))->format('d/m/Y à H:i'),
+            (new \DateTime($piece['dtDepot']))->format('d/m/Y à H:i'),
+            (new \DateTime($piece['dtProduction']))->format('d/m/Y à H:i'),
         ]);
 
         // Ajout d'un point avant l'extension
@@ -283,28 +339,160 @@ class Prevarisc
             $query_builder->insert('piecejointe')->values([
                 'NOM_PIECEJOINTE'         => $query_builder->createPositionalParameter($filename),
                 'EXTENSION_PIECEJOINTE'   => $query_builder->createPositionalParameter($extension),
-                'DATE_PIECEJOINTE'        => $query_builder->createPositionalParameter((new Datetime())->format('Y-m-d')),
+                'DATE_PIECEJOINTE'        => $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d')),
                 'DESCRIPTION_PIECEJOINTE' => $query_builder->createPositionalParameter($description),
-            ])->execute();
+            ])->executeStatement();
 
-            $piece_jointe_id = $this->db->lastInsertId();
+            $piece_jointe_id = (string) $this->db->lastInsertId();
 
             // Création de la liaison avec la pièce jointe et le dossier
             $this->db->createQueryBuilder()->insert('dossierpj')->values([
                 'ID_PIECEJOINTE' => $piece_jointe_id,
                 'ID_DOSSIER'     => $dossier_id,
                 'PJ_COMMISSION'  => 0,
-            ])->execute();
+            ])->executeStatement();
 
             // Stockage de la pièce jointe
             $this->filesystem->write($piece_jointe_id.$extension, $file_contents);
 
             // On commit les changements
             $this->db->commit();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Récupère les pièces jointes avec un statut d'envoi vers Plat'AU spécifique.
+     * Le statut peut être : on_error ; not_exported ; to_be_exported ; exported.
+     */
+    public function recupererPiecesAvecStatut(int $id_dossier, string $status) : array
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        $query = $query_builder
+            ->select('pj.ID_PIECEJOINTE', 'pj.EXTENSION_PIECEJOINTE', 'pj.NOM_PIECEJOINTE', 'd.ID_PLATAU', 'pjs.NOM_STATUT')
+            ->from('piecejointe', 'pj')
+            ->leftJoin('pj', 'piecejointestatut', 'pjs', 'pjs.ID_PIECEJOINTESTATUT = pj.ID_PIECEJOINTESTATUT')
+            ->join('pj', 'dossierpj', 'dpj', 'dpj.ID_PIECEJOINTE = pj.ID_PIECEJOINTE')
+            ->join('dpj', 'dossier', 'd', 'd.ID_DOSSIER = dpj.ID_DOSSIER')
+            ->where(
+                $query_builder->expr()->and(
+                    $query_builder->expr()->eq('d.ID_DOSSIER', '?'),
+                    $query_builder->expr()->eq('pjs.NOM_STATUT', '?')
+                )
+            )
+            ->setParameter(0, $id_dossier)
+            ->setParameter(1, $status)
+            ->executeQuery()
+        ;
+
+        return $query->fetchAllAssociative();
+    }
+
+    /**
+     * Récupère la pièce jointe sur le serveur.
+     */
+    public function recupererFichierPhysique(int $piece_jointe_id, string $piece_jointe_extension) : string
+    {
+        return $this->filesystem->read("{$piece_jointe_id}{$piece_jointe_extension}");
+    }
+
+    /**
+     * Modifie le statut d'envoi vers Plat'AU de la pièce.
+     * Le statut peut être : on_error ; not_exported ; to_be_exported ; exported.
+     */
+    public function changerStatutPiece(int $piece_jointe_id, string $statut) : void
+    {
+        $query_builder = $this->db->createQueryBuilder();
+
+        /** @var string|false $id_statut */
+        $id_statut = $query_builder
+            ->select('ID_PIECEJOINTESTATUT')
+            ->from('piecejointestatut')
+            ->where(
+                $query_builder->expr()->eq('NOM_STATUT', '?')
+            )
+            ->setParameter(0, $statut)
+            ->executeQuery()
+            ->fetchOne()
+        ;
+
+        if (false === $id_statut) {
+            throw new \Exception("Statut $statut inconnu");
+        }
+
+        $query_builder
+            ->update('piecejointe', 'pj')
+            ->set('ID_PIECEJOINTESTATUT', $id_statut)
+            ->where(
+                $query_builder->expr()->eq('ID_PIECEJOINTE', '?')
+            )
+            ->setParameter(0, $piece_jointe_id)
+            ->executeStatement()
+        ;
+    }
+
+    /**
+     * Mise à jour des métadonnées de la consultation.
+     * Objet métier : AVIS ; Statut : unknown ; in_progress ; treated ; to_export ; in_error
+     * Objet métier : PEC ; Statut : unknown ; awaiting ; taken_into_account ; to_export ; in_error.
+     */
+    public function setMetadonneesEnvoi(string $consultation_id, string $objet_metier, string $statut) : QueryBuilder
+    {
+        $query_builder_select = $this->db->createQueryBuilder();
+        $query_builder        = $this->db->createQueryBuilder();
+
+        $consultation_metadonnees = $query_builder_select
+            ->select('ID_PLATAU')
+            ->from('platauconsultation')
+            ->where(
+                $query_builder_select->expr()->eq('ID_PLATAU', ':id')
+            )
+            ->setParameter('id', $consultation_id)
+            ->executeQuery()
+        ;
+
+        if (false === $consultation_metadonnees->fetchOne()) {
+            $query_builder
+                ->insert('platauconsultation')
+                ->setValue('ID_PLATAU', ':id')
+                ->setValue(sprintf('STATUT_%s', $objet_metier), ':statut')
+                ->setParameter('id', $consultation_id)
+                ->setParameter('statut', $statut)
+            ;
+
+            return $query_builder;
+        }
+
+        /*
+            Les statuts AVIS :
+            ------------------
+            INCONNU = 'unknown';
+            EN_COURS = 'in_progress';
+            TRAITE = 'treated';
+            A_RENVOYER = 'to_export';
+            EN_ERREUR = 'in_error';
+
+            Les statits PEC :
+            -----------------
+            INCONNU = 'unknown';
+            EN_ATTENTE = 'awaiting';
+            PRISE_EN_COMPTE = 'taken_into_account';
+            A_RENVOYER = 'to_export';
+            EN_ERREUR = 'in_error';
+        */
+
+        $query_builder
+            ->update('platauconsultation')
+            ->set(sprintf('STATUT_%s', $objet_metier), ':statut')
+            ->where('ID_PLATAU = :id')
+            ->setParameter('statut', $statut)
+            ->setParameter('id', $consultation_id)
+        ;
+
+        return $query_builder;
     }
 
     /**
@@ -321,10 +509,10 @@ class Prevarisc
             case 4: return 1; // Permis de construire (PC)
             case 5: return 14; // Permis d’aménager (PA)
             case 6: return 15; // Permis de démolir (PD)
-            case 7: throw new Exception('Nature Demande de transfert (DT) non supportée');
-            case 8: throw new Exception('Nature Dossier d’infraction (DI) non supportée');
+            case 7: throw new \Exception('Nature Demande de transfert (DT) non supportée');
+            case 8: throw new \Exception('Nature Dossier d’infraction (DI) non supportée');
         }
 
-        throw new Exception('Nature inconnue');
+        throw new \Exception('Nature inconnue');
     }
 }

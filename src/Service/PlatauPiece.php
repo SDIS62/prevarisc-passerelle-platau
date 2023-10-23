@@ -7,6 +7,39 @@ use Psr\Http\Message\ResponseInterface;
 
 final class PlatauPiece extends PlatauAbstract
 {
+    /**
+     * Upload un document sur Syncplicity et formatte le retour pour une utilisation dans une requête d'un objet métier du dossier.
+     */
+    public function uploadDocument(string $filename, string $file_contents, int $type_document) : array
+    {
+        $syncplicity = $this->getSyncplicity();
+        if (null === $syncplicity) {
+            throw new \Exception('Le client Syncplicity doit être activé pour poursuivre cette action.');
+        }
+
+        // On envoie le contenu du fichier dans Plat'AU via Syncplicity
+        $file = $syncplicity->upload($file_contents, $filename);
+
+        \assert(\array_key_exists('data_file_id', $file));
+        $syncplicity_file_id = (string) $file['data_file_id'];
+
+        \assert(\array_key_exists('VirtualFolderId', $file));
+        $syncplicity_folder_id = (string) $file['VirtualFolderId'];
+
+        $document = [
+            'fileId'               => $syncplicity_file_id,
+            'folderId'             => $syncplicity_folder_id,
+            'dtProduction'         => (new \DateTime())->format('Y-m-d'),
+            'idActeurProducteur'   => (string) $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
+            'algoHash'             => 'SHA-512',
+            'hash'                 => hash('sha512', $file_contents),
+            'nomTypeDocument'      => $type_document,  // Nomenclature TYPE_DOCUMENT
+            'nomTypeProducteurDoc' => 1,  // Nomenclature NATURE_PIECE. Toujours à 1 : "Personne jouant un rôle dans un dossier"
+        ];
+
+        return $document;
+    }
+
     /*
      * Télécharge un document
      */
@@ -15,10 +48,13 @@ final class PlatauPiece extends PlatauAbstract
         // Création d'un client HTTP à part permettant de récupérer les fichiers Plat'AU
         $http_client = new HttpClient();
 
+        \assert(\array_key_exists('url', $piece));
+        \assert(\array_key_exists('token', $piece));
+
         // On lance la requête HTTP de récupération
-        return $http_client->request('GET', $piece['url'], [
+        return $http_client->request('GET', (string) $piece['url'], [
             'headers' => [
-                'Authorization' => 'Bearer '.$piece['token'],
+                'Authorization' => 'Bearer '.(string) $piece['token'],
             ],
         ]);
     }
