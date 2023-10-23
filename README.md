@@ -44,7 +44,7 @@ Il est nécessaire d'appliquer un patch mineur sur l'applicatif Prevarisc avant 
 ### Configuration
 Afin d'utiliser la passerelle vous aurez besoin d'identifants [PISTE](https://piste.gouv.fr/) ainsi qu'un identifant Acteur Plat'AU. Naturellement, pour que la passerelle puisse se connecter à Prevarisc, elle aura besoin de s'authentifier sur la base de données.
 Voici un exemple d'un fichier JSON de configuration :
-```json
+```jsonc
 {
     "platau.options": {
         "PISTE_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
