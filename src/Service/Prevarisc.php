@@ -216,9 +216,15 @@ class Prevarisc
 
             // Insertion des numéros de document d'urbanisme (PC, AT ...)
             if (null !== $consultation['dossier']['noLocal']) {
+                $num_doc_urba = $consultation['dossier']['noLocal'];
+
+                if (null !== $consultation['dossier']['suffixeNoLocal']) {
+                    $num_doc_urba .= $consultation['dossier']['suffixeNoLocal'];
+                }
+
                 $query_builder_docurba = $this->db->createQueryBuilder()->insert('dossierdocurba');
                 $query_builder_docurba->values([
-                    'NUM_DOCURBA' => $query_builder_docurba->createPositionalParameter($consultation['dossier']['noLocal']),
+                    'NUM_DOCURBA' => $query_builder_docurba->createPositionalParameter($num_doc_urba),
                     'ID_DOSSIER'  => $dossier_id,
                 ])->executeStatement();
             }
