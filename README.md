@@ -39,7 +39,10 @@ $ git clone https://github.com/SDIS62/prevarisc-passerelle-platau
 $ composer install -n --no-dev --no-suggest --no-progress --no-scripts
 ```
 
-Il est nécessaire d'appliquer un patch mineur sur l'applicatif Prevarisc avant d'utiliser la passerelle.
+Il est nécessaire d'appliquer deux patchs mineurs sur l'applicatif Prevarisc avant d'utiliser la passerelle :
+
+- Le commit de mise à jour Prevarisc : https://github.com/SDIS62/prevarisc/commit/b9626ba37b591d251233d071490fcff0f44420ff
+- La mise à jour concernant l'export des rapports : https://github.com/SDIS62/prevarisc/pull/698
 
 ### Configuration
 Afin d'utiliser la passerelle vous aurez besoin d'identifants [PISTE](https://piste.gouv.fr/) ainsi qu'un identifant Acteur Plat'AU. Naturellement, pour que la passerelle puisse se connecter à Prevarisc, elle aura besoin de s'authentifier sur la base de données.
