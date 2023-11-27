@@ -166,8 +166,10 @@ class Prevarisc
             $query_builder->setValue('SERVICEINSTRUC_DOSSIER', $query_builder->createPositionalParameter(null !== $service_instructeur ? $service_instructeur['designationActeur'] : null));
 
             // On place des dates importantes dans Prevarisc
-            $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d H:i:s')));
-            $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d H:i:s')));
+            $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new \Datetime())->format('Y-m-d H:i:s')));
+
+            $date_insertion = $consultation['dtEmission'] ?? $consultation['dtConsultation'] ?? 'now';
+            $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new \Datetime($date_insertion))->format('Y-m-d H:i:s')));
 
             // On associe la consultation Plat'AU avec le dossier créé
             $query_builder->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation['idConsultation']));
