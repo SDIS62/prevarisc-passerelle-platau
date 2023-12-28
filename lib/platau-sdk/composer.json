@@ -1,0 +1,38 @@
+{
+    "name": "sdis62/platau-sdk",
+    "description": "Platau PHP SDK",
+    "version": "dev-main",
+    "autoload": {
+        "psr-4": {
+            "SDIS62\\Platau\\": "src/",
+            "SDIS62\\Platau\\Test\\": "tests/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./../syncplicity-sdk"
+        }
+    ],
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "kamermans/guzzle-oauth2-subscriber": "^1.0",
+        "pagerfanta/pagerfanta": "^3.6",
+        "caseyamcl/guzzle_retry_middleware": "^2.8",
+        "symfony/options-resolver": "^5.2",
+        "sdis62/syncplicity-sdk": "*"
+    },
+    "require-dev": {
+        "kdubuc/php-cs-fixer-rules": "^1.0",
+        "phpunit/phpunit": "^9.5",
+        "vimeo/psalm": "^4.23"
+    },
+    "scripts": {
+        "fix-cs": "php vendor/bin/php-cs-fixer fix --config=vendor/kdubuc/php-cs-fixer-rules/php-cs-fixer.php",
+        "check-cs": "php vendor/bin/php-cs-fixer fix -v --dry-run --stop-on-violation --using-cache=no --config=vendor/kdubuc/php-cs-fixer-rules/php-cs-fixer.php",
+        "analyze": "php vendor/bin/psalm --no-cache"
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev"
+}

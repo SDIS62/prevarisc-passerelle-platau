@@ -2,23 +2,30 @@
     "name": "sdis62/prevarisc-passerelle-platau",
     "type": "application",
     "description": "Une passerelle d'import / export automatisée entre Prevarisc et Plat'AU",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./lib/syncplicity-sdk"
+        },
+        {
+            "type": "path",
+            "url": "./lib/platau-sdk"
+        }
+    ],
     "require": {
         "php": "^7.4 || ^8.0",
-        "guzzlehttp/guzzle": "^7.0",
-        "kamermans/guzzle-oauth2-subscriber": "^1.0",
+        "league/flysystem": "^2.0",
         "uma/dic": "^1.0",
+        "adbario/php-dot-notation": "^3.2",
         "symfony/console": "^5.2",
         "doctrine/dbal": "^3.0",
-        "league/flysystem": "^2.0",
         "symfony/options-resolver": "^5.2",
-        "pagerfanta/pagerfanta": "^3.6",
-        "caseyamcl/guzzle_retry_middleware": "^2.8",
-        "adbario/php-dot-notation": "^3.2"
+        "sdis62/platau-sdk": "*"
     },
     "require-dev": {
         "kdubuc/php-cs-fixer-rules": "^1.0",
         "vimeo/psalm": "^5.0",
-        "phpunit/phpunit": "^9.0"
+        "phpunit/phpunit": "^10.0"
     },
     "autoload": {
         "psr-4": {
@@ -27,5 +34,6 @@
     },
     "bin": [
         "bin/platau"
-    ]
+    ],
+    "minimum-stability": "dev"
 }

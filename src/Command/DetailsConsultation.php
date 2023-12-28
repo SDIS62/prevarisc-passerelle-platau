@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use Adbar\Dot;
-use App\Service\PlatauConsultation;
+use SDIS62\Platau\PlatauConsultation;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;

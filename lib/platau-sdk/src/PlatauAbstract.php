@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace SDIS62\Platau;
 
 use GuzzleHttp\Utils;
 use GuzzleHttp\Middleware;
@@ -11,6 +11,7 @@ use kamermans\OAuth2\OAuth2Middleware;
 use Psr\Http\Message\RequestInterface;
 use Pagerfanta\Adapter\CallbackAdapter;
 use Psr\Http\Message\ResponseInterface;
+use SDIS62\Syncplicity\SyncplicityClient;
 use GuzzleHttp\HandlerStack as HttpPipeline;
 use kamermans\OAuth2\GrantType\ClientCredentials;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -198,7 +199,7 @@ abstract class PlatauAbstract
                     $json     = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
                     \assert(\is_array($json));
                     \assert(\array_key_exists('resultats', $json) && \is_array($json['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
-                    $results = $results + $json['resultats'];
+                    $results += $json['resultats'];
                 }
 
                 return \array_slice($results, $offset % $max_per_page, $length);
