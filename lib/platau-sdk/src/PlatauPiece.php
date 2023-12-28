@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service;
+namespace SDIS62\Platau;
 
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface;

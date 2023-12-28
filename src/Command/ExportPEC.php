@@ -2,13 +2,13 @@
 
 namespace App\Command;
 
-use App\Service\PlatauPiece;
+use SDIS62\Platau\PlatauPiece;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use App\Service\PlatauConsultation as PlatauConsultationService;
+use SDIS62\Platau\PlatauConsultation as PlatauConsultationService;
 
 final class ExportPEC extends Command
 {

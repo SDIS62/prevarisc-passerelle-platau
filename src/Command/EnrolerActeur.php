@@ -5,7 +5,7 @@ namespace App\Command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
-use App\Service\PlatauActeur as PlatauActeurService;
+use SDIS62\Platau\PlatauActeur as PlatauActeurService;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class EnrolerActeur extends Command

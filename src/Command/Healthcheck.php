@@ -7,7 +7,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use App\Service\PlatauHealthcheck as PlatauHealthcheckService;
+use SDIS62\Platau\PlatauHealthcheck as PlatauHealthcheckService;
 
 final class Healthcheck extends Command
 {
