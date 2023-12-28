@@ -2,9 +2,9 @@
 
 namespace App\ServiceProvider;
 
-use SDIS62\Platau as Service;
 use UMA\DIC\Container;
 use UMA\DIC\ServiceProvider;
+use SDIS62\Platau as Service;
 use SDIS62\Syncplicity\SyncplicityClient;
 
 final class Platau implements ServiceProvider

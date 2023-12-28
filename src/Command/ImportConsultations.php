@@ -6,8 +6,8 @@ use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
-use SDIS62\Platau\PlatauActeur as PlatauActeurService;
 use Symfony\Component\Console\Output\OutputInterface;
+use SDIS62\Platau\PlatauActeur as PlatauActeurService;
 use SDIS62\Platau\PlatauConsultation as PlatauConsultationService;
 use SDIS62\Platau\PlatauNotification as PlatauNotificationService;
 

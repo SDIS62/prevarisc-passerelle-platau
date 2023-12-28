@@ -5,8 +5,8 @@ namespace App\Command;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
-use SDIS62\Platau\PlatauPiece as PlatauPieceService;
 use Symfony\Component\Console\Input\InputInterface;
+use SDIS62\Platau\PlatauPiece as PlatauPieceService;
 use Symfony\Component\Console\Output\OutputInterface;
 use SDIS62\Platau\PlatauConsultation as PlatauConsultationService;
 

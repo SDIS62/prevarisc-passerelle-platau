@@ -2,9 +2,9 @@
 
 namespace App\ServiceProvider;
 
-use SDIS62\Syncplicity\SyncplicityClient;
 use UMA\DIC\Container;
 use UMA\DIC\ServiceProvider;
+use SDIS62\Syncplicity\SyncplicityClient;
 
 final class Syncplicity implements ServiceProvider
 {
