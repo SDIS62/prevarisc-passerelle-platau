@@ -10,7 +10,7 @@
         <directory name="src" />
         <directory name="bin" />
         <ignoreFiles>
-            <!--<directory name="src/Command" />-->
+            <directory name="src/Command" />
             <file name="src/ServiceProvider/Prevarisc.php" />
             <directory name="vendor" />
         </ignoreFiles>
@@ -21,6 +21,11 @@
                 <file name="src/Service/Prevarisc.php" />
             </errorLevel>
         </TooManyArguments>
+        <InternalMethod>
+            <errorLevel type="suppress">
+                <file name="src/Service/Prevarisc.php" />
+            </errorLevel>
+        </InternalMethod>
         <MixedArgument errorLevel="suppress" />
         <MixedArrayAccess errorLevel="suppress" />
     </issueHandlers>

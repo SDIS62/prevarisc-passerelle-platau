@@ -163,7 +163,7 @@ class Prevarisc
             // On place des dates importantes dans Prevarisc
             $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d H:i:s')));
 
-            $date_insertion = $consultation['dtEmission'] ?? $consultation['dtConsultation'] ?? 'now';
+            $date_insertion = (string) ($consultation['dtEmission'] ?? $consultation['dtConsultation'] ?? 'now');
             $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new \DateTime($date_insertion))->format('Y-m-d H:i:s')));
 
             // On associe la consultation Plat'AU avec le dossier créé
@@ -171,18 +171,18 @@ class Prevarisc
 
             // Objet du dossier (c'est à dire l'objet de la consultation ainsi que le descriptif global du dossier associé)
             $query_builder->setValue('OBJET_DOSSIER', $query_builder->createPositionalParameter(vsprintf('Objet de la consultation : %s ; %s', [
-                $consultation['txObjetDeLaConsultation'] ?? 'SANS OBJET',
-                $consultation['dossier']['txDescriptifGlobal'],
+                0 => $consultation['txObjetDeLaConsultation'] ?? 'SANS OBJET',
+                1 => $consultation['dossier']['txDescriptifGlobal'],
             ])));
 
             // On note dans les observations du dossier des données importantes de Plat'AU (dates, type de consulation ...)
             $query_builder->setValue('OBSERVATION_DOSSIER', $query_builder->createPositionalParameter(vsprintf('Consultation PLATAU : Consultation de type %s décidée le %s et transmise au service consultable le %s. Une réponse est attendue dans %s %s. (ID PLATAU DOSSIER : %s)', [
-                $consultation['nomTypeConsultation']['libNom'] ?? 'INCONNUE',
-                $consultation['dtConsultation'] ?? 'DATE CONSULTATION INCONNUE',
-                $consultation['dtEmission'] ?? 'DATE EMISSION INCONNUE',
-                $consultation['delaiDeReponse'] ?? 'DELAI INCONNU',
-                $consultation['nomTypeDelai']['libNom'] ?? '',
-                $consultation['dossier']['idDossier'] ?? 'ID INCONNU',
+                0 => $consultation['nomTypeConsultation']['libNom'] ?? 'INCONNUE',
+                1 => $consultation['dtConsultation'] ?? 'DATE CONSULTATION INCONNUE',
+                2 => $consultation['dtEmission'] ?? 'DATE EMISSION INCONNUE',
+                3 => $consultation['delaiDeReponse'] ?? 'DELAI INCONNU',
+                4 => $consultation['nomTypeDelai']['libNom'] ?? '',
+                5 => $consultation['dossier']['idDossier'] ?? 'ID INCONNU',
             ])));
 
             // Les champs suivant doivent être mis à NULL manuellement, car aucune valeur par défaut n'est prévue dans la base de données
@@ -213,10 +213,10 @@ class Prevarisc
 
             // Insertion des numéros de document d'urbanisme (PC, AT ...)
             if (null !== $consultation['dossier']['noLocal']) {
-                $num_doc_urba = $consultation['dossier']['noLocal'];
+                $num_doc_urba = (string) $consultation['dossier']['noLocal'];
 
                 if (null !== $consultation['dossier']['suffixeNoLocal']) {
-                    $num_doc_urba .= $consultation['dossier']['suffixeNoLocal'];
+                    $num_doc_urba .= (string) $consultation['dossier']['suffixeNoLocal'];
                 }
 
                 $query_builder_docurba = $this->db->createQueryBuilder()->insert('dossierdocurba');
@@ -313,7 +313,11 @@ class Prevarisc
     public function creerPieceJointe(int $dossier_id, array $piece, string $extension, string $file_contents) : void
     {
         // Génération du nom du fichier
-        $filename = vsprintf('PLATAU-%s-%s-v%d', [$piece['idPiece'], $piece['noPiece'], $piece['noVersion']]);
+        $filename = vsprintf('PLATAU-%s-%s-v%d', [
+            0 => (string) $piece['idPiece'],
+            1 => (string) $piece['noPiece'],
+            2 => (string) $piece['noVersion'
+        ]]);
 
         // Si le fichier existe déjà, on ne l'importe pas
         if ($this->pieceJointeExisteDansDossier($dossier_id, $filename)) {
@@ -322,12 +326,12 @@ class Prevarisc
 
         // Génération de la description
         $description = vsprintf('%s v%s (Pièce %s avec un état %s. Elle a été déposée le %s et produite le %s.)', [
-            (string) $piece['nomTypePiece']['libNom'].' '.(string) $piece['libAutreTypePiece'],
-            $piece['noVersion'],
-            $piece['nomNaturePiece']['libNom'],
-            $piece['nomEtatPiece']['libNom'],
-            (new \DateTime($piece['dtDepot']))->format('d/m/Y à H:i'),
-            (new \DateTime($piece['dtProduction']))->format('d/m/Y à H:i'),
+            0 => (string) $piece['nomTypePiece']['libNom'].' '.(string) $piece['libAutreTypePiece'],
+            1 => (string) $piece['noVersion'],
+            2 => (string) $piece['nomNaturePiece']['libNom'],
+            3 => (string) $piece['nomEtatPiece']['libNom'],
+            4 => (new \DateTime($piece['dtDepot']))->format('d/m/Y à H:i'),
+            5 => (new \DateTime($piece['dtProduction']))->format('d/m/Y à H:i'),
         ]);
 
         // Ajout d'un point avant l'extension
