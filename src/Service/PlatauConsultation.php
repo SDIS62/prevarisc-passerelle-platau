@@ -4,14 +4,6 @@ namespace App\Service;
 
 final class PlatauConsultation extends PlatauAbstract
 {
-    private PlatauPiece $piece_service;
-
-    public function __construct(array $config, PlatauPiece $piece_service)
-    {
-        $this->piece_service = $piece_service;
-        parent::__construct($config);
-    }
-
     /**
      * Recherche de plusieurs consultations.
      */

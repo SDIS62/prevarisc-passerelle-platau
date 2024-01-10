@@ -24,7 +24,7 @@ final class Platau implements ServiceProvider
      */
     public function provide(Container $c) : void
     {
-        $client = new Service\PlatauClient($this->config, $container);
+        $client = new Service\PlatauClient($this->config);
 
         if ($c->has(Service\SyncplicityClient::class)) {
             $syncplicity = $c->get(Service\SyncplicityClient::class);

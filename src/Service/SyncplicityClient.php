@@ -2,14 +2,14 @@
 
 namespace App\Service;
 
+use GuzzleHttp\Utils;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\BodySummarizer;
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\HandlerStack as HttpPipeline;
-use GuzzleHttp\Middleware;
-use GuzzleHttp\Utils;
-use kamermans\OAuth2\GrantType\ClientCredentials;
 use kamermans\OAuth2\OAuth2Middleware;
 use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\HandlerStack as HttpPipeline;
+use kamermans\OAuth2\GrantType\ClientCredentials;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class SyncplicityClient
