@@ -2,66 +2,42 @@
 
 namespace App\Service;
 
-use DateTime;
-use Exception;
 use GuzzleHttp\Client as HttpClient;
 use Psr\Http\Message\ResponseInterface;
 
 final class PlatauPiece extends PlatauAbstract
 {
-    private Prevarisc $prevarisc_service;
-    private SyncplicityClient $syncplicity_client;
-
-    public function __construct(array $config, Prevarisc $prevarisc_service, SyncplicityClient $syncplicity_client)
-    {
-        $this->prevarisc_service  = $prevarisc_service;
-        $this->syncplicity_client = $syncplicity_client;
-        parent::__construct($config);
-    }
-
     /**
-     * Upload les documents sur Syncplicity et formatte le retour pour une utilisation dans une requête d'un objet métier du dossier.
+     * Upload un document sur Syncplicity et formatte le retour pour une utilisation dans une requête d'un objet métier du dossier.
      */
-    public function formatDocuments(array $pieces, int $type_document) : array
+    public function uploadDocument(string $filename, string $file_contents, int $type_document) : array
     {
-        if (0 === \count($pieces)) {
-            return [];
+        $syncplicity = $this->getSyncplicity();
+        if (null === $syncplicity) {
+            throw new \Exception('Le client Syncplicity doit être activé pour poursuivre cette action.');
         }
 
-        $id_acteur = $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'];
-        $documents = [];
+        // On envoie le contenu du fichier dans Plat'AU via Syncplicity
+        $file = $syncplicity->upload($file_contents, $filename);
 
-        foreach ($pieces as $piece) {
-            try {
-                $file_contents = $this->prevarisc_service->recupererFichierPhysique($piece['ID_PIECEJOINTE'], $piece['EXTENSION_PIECEJOINTE']);
-                $file_name     = $piece['NOM_PIECEJOINTE'].$piece['EXTENSION_PIECEJOINTE'];
-                $file          = $this->syncplicity_client->upload($file_contents, $file_name);
-                $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'exported');
-            } catch (Exception $e) {
-                $this->prevarisc_service->changerStatutPiece($piece['ID_PIECEJOINTE'], 'on_error');
+        \assert(\array_key_exists('data_file_id', $file));
+        $syncplicity_file_id = (string) $file['data_file_id'];
 
-                continue;
-            }
+        \assert(\array_key_exists('VirtualFolderId', $file));
+        $syncplicity_folder_id = (string) $file['VirtualFolderId'];
 
-            \assert(\array_key_exists('data_file_id', $file));
-            $syncplicity_file_id = $file['data_file_id'];
+        $document = [
+            'fileId'               => $syncplicity_file_id,
+            'folderId'             => $syncplicity_folder_id,
+            'dtProduction'         => (new \DateTime())->format('Y-m-d'),
+            'idActeurProducteur'   => (string) $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
+            'algoHash'             => 'SHA-512',
+            'hash'                 => hash('sha512', $file_contents),
+            'nomTypeDocument'      => $type_document,  // Nomenclature TYPE_DOCUMENT
+            'nomTypeProducteurDoc' => 1,  // Nomenclature NATURE_PIECE. Toujours à 1 : "Personne jouant un rôle dans un dossier"
+        ];
 
-            \assert(\array_key_exists('VirtualFolderId', $file));
-            $syncplicity_folder_id = $file['VirtualFolderId'];
-
-            $documents[] = [
-                'fileId'               => (string) $syncplicity_file_id,
-                'folderId'             => (string) $syncplicity_folder_id,
-                'algoHash'             => 'SHA-512',
-                'dtProduction'         => (new DateTime())->format('Y-m-d'),
-                'hash'                 => hash('sha512', $file_contents),
-                'idActeurProducteur'   => $id_acteur,
-                'nomTypeDocument'      => $type_document,
-                'nomTypeProducteurDoc' => 1, // Personne jouant un rôle dans un dossier
-            ];
-        }
-
-        return $documents;
+        return $document;
     }
 
     /*
@@ -72,10 +48,13 @@ final class PlatauPiece extends PlatauAbstract
         // Création d'un client HTTP à part permettant de récupérer les fichiers Plat'AU
         $http_client = new HttpClient();
 
+        \assert(\array_key_exists('url', $piece));
+        \assert(\array_key_exists('token', $piece));
+
         // On lance la requête HTTP de récupération
-        return $http_client->request('GET', $piece['url'], [
+        return $http_client->request('GET', (string) $piece['url'], [
             'headers' => [
-                'Authorization' => 'Bearer '.$piece['token'],
+                'Authorization' => 'Bearer '.(string) $piece['token'],
             ],
         ]);
     }

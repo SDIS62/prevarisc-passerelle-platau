@@ -11,6 +11,8 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 final class Prevarisc implements ServiceProvider
 {
+    private array $config;
+
     /**
      * Construction du service provider avec un tableau de configuration.
      */
@@ -34,17 +36,17 @@ final class Prevarisc implements ServiceProvider
     /**
      * Setup PSR11 container's configuration from environment variables.
      */
-    public function provide(Container $container) : void
+    public function provide(Container $c) : void
     {
         // Récupération d'une connexion via le driver de la base de données cible
         $connection = DriverManager::getConnection([
-            'dbname'   => $this->config['PREVARISC_DB_NAME'],
-            'user'     => $this->config['PREVARISC_DB_USER'],
-            'password' => $this->config['PREVARISC_DB_PASSWORD'],
-            'host'     => $this->config['PREVARISC_DB_HOST'],
-            'driver'   => $this->config['PREVARISC_DB_DRIVER'],
-            'charset'  => $this->config['PREVARISC_DB_CHARSET'],
-            'port'     => $this->config['PREVARISC_DB_PORT'],
+            'dbname'   => (string) $this->config['PREVARISC_DB_NAME'],
+            'user'     => (string) $this->config['PREVARISC_DB_USER'],
+            'password' => (string) $this->config['PREVARISC_DB_PASSWORD'],
+            'host'     => (string) $this->config['PREVARISC_DB_HOST'],
+            'driver'   => (string) $this->config['PREVARISC_DB_DRIVER'],
+            'charset'  => (string) $this->config['PREVARISC_DB_CHARSET'],
+            'port'     => (int) $this->config['PREVARISC_DB_PORT'],
         ]);
 
         // Création d'une instance FlySystem pour stocker les pièces jointes
@@ -55,6 +57,6 @@ final class Prevarisc implements ServiceProvider
         $service = new PrevariscService($connection, $this->config['PREVARISC_DB_PLATAU_USER_ID'], $filesystem);
 
         // On stocke le service dans le container
-        $container->set('service.prevarisc', $service);
+        $c->set('service.prevarisc', $service);
     }
 }

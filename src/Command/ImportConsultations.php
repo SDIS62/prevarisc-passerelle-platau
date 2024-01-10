@@ -2,7 +2,6 @@
 
 namespace App\Command;
 
-use Exception;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -78,16 +77,13 @@ final class ImportConsultations extends Command
                 $service_instructeur = null !== $consultation['dossier']['idServiceInstructeur'] ? $this->acteur_service->recuperationActeur($consultation['dossier']['idServiceInstructeur']) : null;
                 $demandeur           = null !== $consultation['idServiceConsultant'] ? $this->acteur_service->recuperationActeur($consultation['idServiceConsultant']) : null;
 
-                // Versement de la consultation dans Prevarisc
+                // Versement de la consultation dans Prevarisc et on passe l'état de sa PEC à 'awaiting'
                 $this->prevarisc_service->importConsultation($consultation, $demandeur, $service_instructeur);
-                $this->prevarisc_service
-                    ->setMetadonneesEnvoi($consultation_id, 'PEC', 'awaiting')
-                    ->executeStatement()
-                ;
+                $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'awaiting')->executeStatement();
 
                 // La consultation est importée !
                 $output->writeln("Consultation $consultation_id récupérée et stockée dans Prevarisc !");
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $output->writeln("Problème lors du traitement de la consultation : {$e->getMessage()}");
             }
         }
