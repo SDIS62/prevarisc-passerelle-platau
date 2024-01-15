@@ -86,8 +86,13 @@ class Prevarisc
      */
     public function estDisponible() : bool
     {
-        /* @psalm-suppress InternalMethod */
-        return $this->db->connect();
+        try {
+            /* @psalm-suppress InternalMethod */
+            return $this->db->connect();
+        }
+        catch(\Exception $e) {
+            return false;
+        }
     }
 
     /**
