@@ -21,7 +21,8 @@ class SyncplicityClient
     private array $config;
 
     /**
-     * Création d'une nouvelle instance du client Syncplicity.
+     * Création d'une nouvelle instance du client Syncplicity (https://developer.syncplicity.com/documentation/api_docs).
+     * 
      * La configuration doit contenir au moins :
      * - PISTE_CLIENT_ID (Le client_id de l'application inscrite sur PISTE pour communiquer avec Syncplicity)
      * - PISTE_CLIENT_SECRET (Le client_secret de l'application inscrite sur PISTE pour communiquer avec Syncplicity).
