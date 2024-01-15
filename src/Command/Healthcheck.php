@@ -11,6 +11,9 @@ use App\Service\PlatauHealthcheck as PlatauHealthcheckService;
 
 final class Healthcheck extends Command
 {
+    private PlatauHealthcheckService $healthcheck_service;
+    private PrevariscService $prevarisc_service;
+
     /**
      * Initialisation de la commande.
      */
@@ -36,20 +39,32 @@ final class Healthcheck extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
+        // Affichage des metadata de la passerelle
+        $output->writeln($this->getApplication()->getName() . ' - ' . $this->getApplication()->getVersion());
+        $output->writeln("Identifiant du client : " . $this->healthcheck_service->getConfig()['PISTE_CLIENT_ID']);
+        $output->writeln("ID Acteur Plat'AU : " . $this->healthcheck_service->getConfig()['PLATAU_ID_ACTEUR_APPELANT']);
+        $output->writeln("Syncplicity : " . ($this->healthcheck_service->getSyncplicity() ? 'Activé' : 'Non activé'));
+
         // On vérifie la santé de Plat'AU
         if (true !== $this->healthcheck_service->healthcheck()) {
             throw new \Exception("Plat'AU non fonctionnel actuellement.");
         }
+
+        $output->writeln("Plat'AU : OK");
 
         // On va maintenant tester la connexion à la base de données Prevarisc
         if (!$this->prevarisc_service->estDisponible()) {
             throw new \Exception('Base de données Prevarisc déconnectée.');
         }
 
+        $output->writeln("DB Prevarisc : OK");
+
         // On vérifie que la base de données Prevarisc est compatible avec Plat'AU
         if (!$this->prevarisc_service->estCompatible()) {
             throw new \Exception('Base de données Prevarisc incompatible. Avez-vous pensé à la mise à jour ?');
         }
+
+        $output->writeln("Validation DB Prevarisc : OK");
 
         $output->writeln('RAS. Tout est disponible et prêt à l\'emploi !');
 
