@@ -29,6 +29,13 @@ class PlatauClient extends PlatauAbstract
 
         \assert(null !== $class_name, "Service $name inconnu");
 
-        return new $class_name($this->getConfig());
+        $service = new $class_name($this->getConfig());
+
+        $synclicity = $this->getSyncplicity();
+        if($synclicity !== null) {
+            $service->enableSyncplicity($synclicity);
+        }
+
+        return $service;
     }
 }
