@@ -89,7 +89,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], ?\DateTime $date_envoi = null) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], \DateTime $date_envoi = null) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -101,9 +101,9 @@ final class PlatauConsultation extends PlatauAbstract
             $type_date_limite_reponse = (string) $consultation['nomTypeDelai']['libNom'];
             switch ($type_date_limite_reponse) {
                 case 'Jours calendaires': $date_limite_reponse_interval = new \DateInterval("P{$delai_reponse}D");
-                break;
+                    break;
                 case 'Mois': $date_limite_reponse_interval              = new \DateInterval("P{$delai_reponse}M");
-                break;
+                    break;
                 default: throw new \Exception('Type de la date de réponse attendue inconnu : '.$type_date_limite_reponse);
             }
         }
@@ -139,7 +139,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], ?\DateTime $date_envoi = null) : void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], \DateTime $date_envoi = null) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée (dans les traitées et versées)
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3, 6]]);

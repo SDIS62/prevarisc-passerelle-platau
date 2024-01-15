@@ -198,7 +198,7 @@ abstract class PlatauAbstract
                     $json     = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
                     \assert(\is_array($json));
                     \assert(\array_key_exists('resultats', $json) && \is_array($json['resultats']), "La pagination renvoyée par Plat'AU est incorrecte");
-                    $results = $results + $json['resultats'];
+                    $results += $json['resultats'];
                 }
 
                 return \array_slice($results, $offset % $max_per_page, $length);

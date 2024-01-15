@@ -32,7 +32,7 @@ class PlatauClient extends PlatauAbstract
         $service = new $class_name($this->getConfig());
 
         $synclicity = $this->getSyncplicity();
-        if($synclicity !== null) {
+        if (null !== $synclicity) {
             $service->enableSyncplicity($synclicity);
         }
 

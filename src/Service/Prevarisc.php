@@ -89,8 +89,7 @@ class Prevarisc
         try {
             /* @psalm-suppress InternalMethod */
             return $this->db->connect();
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return false;
         }
     }
@@ -106,35 +105,30 @@ class Prevarisc
                 \in_array('ID_PLATAU', array_map(function (Column $column) {
                     return $column->getName();
                 }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-             &&
             // Colonne 'STATUT_PEC' dans la table 'dossiers'
 
-                \in_array('STATUT_PEC', array_map(function (Column $column) {
+                && \in_array('STATUT_PEC', array_map(function (Column $column) {
                     return $column->getName();
                 }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-             &&
             // Colonne 'DATE_PEC' dans la table 'dossiers'
 
-                \in_array('DATE_PEC', array_map(function (Column $column) {
+                && \in_array('DATE_PEC', array_map(function (Column $column) {
                     return $column->getName();
                 }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-             &&
             // Colonne 'STATUT_AVIS' dans la table 'dossiers'
 
-                \in_array('STATUT_AVIS', array_map(function (Column $column) {
+                && \in_array('STATUT_AVIS', array_map(function (Column $column) {
                     return $column->getName();
                 }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-             &&
             // Colonne 'DATE_AVIS' dans la table 'dossiers'
 
-                \in_array('DATE_AVIS', array_map(function (Column $column) {
+                && \in_array('DATE_AVIS', array_map(function (Column $column) {
                     return $column->getName();
                 }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-             &&
             // Présence de la table 'piecejointestatut'
-            \in_array('piecejointestatut', $this->db->createSchemaManager()->listTableNames()) &&
+            && \in_array('piecejointestatut', $this->db->createSchemaManager()->listTableNames())
             // Présence de la table 'platauconsultation'
-            \in_array('platauconsultation', $this->db->createSchemaManager()->listTableNames())
+            && \in_array('platauconsultation', $this->db->createSchemaManager()->listTableNames())
         ;
     }
 
@@ -171,10 +165,10 @@ class Prevarisc
             $query_builder->setValue('SERVICEINSTRUC_DOSSIER', $query_builder->createPositionalParameter(null !== $service_instructeur ? $service_instructeur['designationActeur'] : null));
 
             // On place des dates importantes dans Prevarisc
-            $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new \Datetime())->format('Y-m-d H:i:s')));
+            $query_builder->setValue('DATESDIS_DOSSIER', $query_builder->createPositionalParameter((new \DateTime())->format('Y-m-d H:i:s')));
 
             $date_insertion = $consultation['dtEmission'] ?? $consultation['dtConsultation'] ?? 'now';
-            $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new \Datetime($date_insertion))->format('Y-m-d H:i:s')));
+            $query_builder->setValue('DATEINSERT_DOSSIER', $query_builder->createPositionalParameter((new \DateTime($date_insertion))->format('Y-m-d H:i:s')));
 
             // On associe la consultation Plat'AU avec le dossier créé
             $query_builder->setValue('ID_PLATAU', $query_builder->createPositionalParameter($consultation['idConsultation']));
