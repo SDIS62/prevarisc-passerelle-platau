@@ -105,26 +105,26 @@ class Prevarisc
                 \in_array('ID_PLATAU', array_map(function (Column $column) {
                     return $column->getName();
                 }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-            // Colonne 'STATUT_PEC' dans la table 'dossiers'
+            // Colonne 'STATUT_PEC' dans la table 'platauconsultation'
 
                 && \in_array('STATUT_PEC', array_map(function (Column $column) {
                     return $column->getName();
-                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-            // Colonne 'DATE_PEC' dans la table 'dossiers'
+                }, $this->db->createSchemaManager()->listTableColumns('platauconsultation')))
+            // Colonne 'DATE_PEC' dans la table 'platauconsultation'
 
                 && \in_array('DATE_PEC', array_map(function (Column $column) {
                     return $column->getName();
-                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-            // Colonne 'STATUT_AVIS' dans la table 'dossiers'
+                }, $this->db->createSchemaManager()->listTableColumns('platauconsultation')))
+            // Colonne 'STATUT_AVIS' dans la table 'platauconsultation'
 
                 && \in_array('STATUT_AVIS', array_map(function (Column $column) {
                     return $column->getName();
-                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
-            // Colonne 'DATE_AVIS' dans la table 'dossiers'
+                }, $this->db->createSchemaManager()->listTableColumns('platauconsultation')))
+            // Colonne 'DATE_AVIS' dans la table 'platauconsultation'
 
                 && \in_array('DATE_AVIS', array_map(function (Column $column) {
                     return $column->getName();
-                }, $this->db->createSchemaManager()->listTableColumns('dossier')))
+                }, $this->db->createSchemaManager()->listTableColumns('platauconsultation')))
             // Présence de la table 'piecejointestatut'
             && \in_array('piecejointestatut', $this->db->createSchemaManager()->listTableNames())
             // Présence de la table 'platauconsultation'
