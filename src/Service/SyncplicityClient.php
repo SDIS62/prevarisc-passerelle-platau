@@ -21,7 +21,8 @@ class SyncplicityClient
     private array $config;
 
     /**
-     * Création d'une nouvelle instance du client Syncplicity.
+     * Création d'une nouvelle instance du client Syncplicity (https://developer.syncplicity.com/documentation/api_docs).
+     *
      * La configuration doit contenir au moins :
      * - PISTE_CLIENT_ID (Le client_id de l'application inscrite sur PISTE pour communiquer avec Syncplicity)
      * - PISTE_CLIENT_SECRET (Le client_secret de l'application inscrite sur PISTE pour communiquer avec Syncplicity).
@@ -111,10 +112,10 @@ class SyncplicityClient
             // On décode la réponse JSON
             $json = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
             \assert(
-                \is_array($json) &&
-                \array_key_exists('data_file_id', $json) &&
-                \array_key_exists('data_file_version_id', $json) &&
-                \array_key_exists('VirtualFolderId', $json),
+                \is_array($json)
+                && \array_key_exists('data_file_id', $json)
+                && \array_key_exists('data_file_version_id', $json)
+                && \array_key_exists('VirtualFolderId', $json),
                 "L'upload du fichier Syncplicity est incorrect"
             );
 
@@ -127,12 +128,12 @@ class SyncplicityClient
         $response          = $this->request('GET', 'pre-upload');
         $ticket_pre_upload = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
         \assert(
-            \is_array($ticket_pre_upload) &&
-            \array_key_exists('VirtualFolderId', $ticket_pre_upload) &&
-            \array_key_exists('Authorization_for_upload', $ticket_pre_upload) &&
-            \array_key_exists('AppKey', $ticket_pre_upload) &&
-            \array_key_exists('Folder_Name', $ticket_pre_upload) &&
-            \array_key_exists('Storage_URL', $ticket_pre_upload),
+            \is_array($ticket_pre_upload)
+            && \array_key_exists('VirtualFolderId', $ticket_pre_upload)
+            && \array_key_exists('Authorization_for_upload', $ticket_pre_upload)
+            && \array_key_exists('AppKey', $ticket_pre_upload)
+            && \array_key_exists('Folder_Name', $ticket_pre_upload)
+            && \array_key_exists('Storage_URL', $ticket_pre_upload),
             'Le ticket pre upload Syncplicity est incorrect'
         );
 
@@ -177,9 +178,9 @@ class SyncplicityClient
 
         $json_file = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
         \assert(
-            \is_array($json_file) &&
-            \array_key_exists('data_file_id', $json_file) &&
-            \array_key_exists('data_file_version_id', $json_file),
+            \is_array($json_file)
+            && \array_key_exists('data_file_id', $json_file)
+            && \array_key_exists('data_file_version_id', $json_file),
             "L'upload du fichier Syncplicity est incorrect"
         );
 
@@ -194,6 +195,6 @@ class SyncplicityClient
      */
     private static function getFileSize(string $file_contents) : int
     {
-        return false === mb_detect_encoding($file_contents, strict: true) ? \mb_strlen($file_contents) : mb_strlen($file_contents);
+        return false === mb_detect_encoding($file_contents, strict: true) ? mb_strlen($file_contents) : mb_strlen($file_contents);
     }
 }
