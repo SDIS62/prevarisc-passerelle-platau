@@ -67,6 +67,8 @@ final class ExportPEC extends Command
 
             // On essaie d'envoyer la PEC
             try {
+                $pieces = [];
+
                 // Récupération du dossier lié à la consultation
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
@@ -75,14 +77,19 @@ final class ExportPEC extends Command
                 }
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = [];
                 if ($this->piece_service->getSyncplicity()) {
-                    $pieces = array_map(function ($piece_jointe) {
+                    $pieces_to_export = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
+                    foreach ($pieces_to_export as $piece_jointe) {
                         $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
                         $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
 
-                        return $this->piece_service->uploadDocument($filename, $contents, 6); // Type document 6 = Demande de pièces complémentaires
-                    }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
+                        try {
+                            $pieces[] = $this->piece_service->uploadDocument($filename, $contents, 6); // Type document 6 = Demande de pièces complémentaires
+                            $this->prevarisc_service->changerStatutPiece($piece_jointe['ID_PIECEJOINTE'], 'exported');
+                        } catch (\Exception $e) {
+                            $this->prevarisc_service->changerStatutPiece($piece_jointe['ID_PIECEJOINTE'], 'on_error');
+                        }
+                    }
                 }
 
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative

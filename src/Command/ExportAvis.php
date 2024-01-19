@@ -68,6 +68,8 @@ final class ExportAvis extends Command
 
             // On essaie d'envoyer l'avis sur Plat'AU
             try {
+                $pieces = [];
+
                 // Récupération du dossier dans Prevarisc
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
 
@@ -79,14 +81,19 @@ final class ExportAvis extends Command
                 $prescriptions = $this->prevarisc_service->getPrescriptions($dossier['ID_DOSSIER']);
 
                 // On recherche les pièces jointes en attente d'envoi vers Plat'AU associées au dossier Prevarisc
-                $pieces = [];
                 if ($this->piece_service->getSyncplicity()) {
-                    $pieces = array_map(function ($piece_jointe) {
+                    $pieces_to_export = $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported');
+                    foreach ($pieces_to_export as $piece_jointe) {
                         $filename = $piece_jointe['NOM_PIECEJOINTE'].$piece_jointe['EXTENSION_PIECEJOINTE'];
                         $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
 
-                        return $this->piece_service->uploadDocument($filename, $contents, 9); // Type de document 9 = Document lié à un avis
-                    }, $this->prevarisc_service->recupererPiecesAvecStatut($dossier['ID_DOSSIER'], 'to_be_exported'));
+                        try {
+                            $pieces[] = $this->piece_service->uploadDocument($filename, $contents, 9); // Type de document 9 = Document lié à un avis
+                            $this->prevarisc_service->changerStatutPiece($piece_jointe['ID_PIECEJOINTE'], 'exported');
+                        } catch (\Exception $e) {
+                            $this->prevarisc_service->changerStatutPiece($piece_jointe['ID_PIECEJOINTE'], 'on_error');
+                        }
+                    }
                 }
 
                 // On verse l'avis de commission Prevarisc (défavorable ou favorable à l'étude) dans Plat'AU
