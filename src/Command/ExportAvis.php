@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Service\PlatauPiece;
-use App\ValueObjects\PrevariscAuteur;
+use App\ValueObjects\Auteur;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -73,6 +73,7 @@ final class ExportAvis extends Command
 
                 // Récupération du dossier dans Prevarisc
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
+                $auteur  = $this->prevarisc_service->recupererDossierAuteur($dossier['ID_DOSSIER']);
 
                 if (6 === $consultation['nomEtatConsultation']['idNom'] && !\in_array($dossier['STATUT_AVIS'], ['to_export', 'in_error'])) {
                     continue;
@@ -110,9 +111,9 @@ final class ExportAvis extends Command
                         $prescriptions,
                         $pieces,
                         'to_export' === $dossier['STATUT_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : new \DateTime(),
-                        new PrevariscAuteur($dossier['PRENOM_UTILISATEURINFORMATIONS'], $dossier['NOM_UTILISATEURINFORMATIONS'], $dossier['MAIL_UTILISATEURINFORMATIONS'], $dossier['TELFIXE_UTILISATEURINFORMATIONS'], $dossier['TELPORTABLE_UTILISATEURINFORMATIONS'])
+                        new Auteur($auteur['PRENOM_UTILISATEURINFORMATIONS'], $auteur['NOM_UTILISATEURINFORMATIONS'], $auteur['MAIL_UTILISATEURINFORMATIONS'], $auteur['TELFIXE_UTILISATEURINFORMATIONS'], $auteur['TELPORTABLE_UTILISATEURINFORMATIONS']),
                     );
-                    $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')->setValue('DATE_AVIS', ':date_avis')->setParameter('date_avis', date('Y-m-d'))->executeStatement();
+                    $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')->set('DATE_AVIS', ':date_avis')->setParameter('date_avis', date('Y-m-d'))->executeStatement();
                     $output->writeln('Avis envoyé !');
                 } else {
                     $output->writeln("Impossible d'envoyer un avis pour la consultation $consultation_id pour le moment (en attente de l'avis de commission dans Prevarisc) ...");

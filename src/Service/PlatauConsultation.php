@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\ValueObjects\PrevariscAuteur;
+use App\ValueObjects\Auteur;
 
 final class PlatauConsultation extends PlatauAbstract
 {
@@ -91,7 +91,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], \DateTime $date_envoi = null, PrevariscAuteur $auteur) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], \DateTime $date_envoi = null, Auteur $auteur) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -145,7 +145,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], \DateTime $date_envoi = null, PrevariscAuteur $auteur) : void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], \DateTime $date_envoi = null, Auteur $auteur) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée (dans les traitées et versées)
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3, 6]]);

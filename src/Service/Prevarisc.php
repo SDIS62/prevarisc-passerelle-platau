@@ -58,17 +58,9 @@ class Prevarisc
                 'platauconsultation.DATE_PEC',
                 'platauconsultation.STATUT_AVIS',
                 'platauconsultation.DATE_AVIS',
-                'utilisateurinformations.NOM_UTILISATEURINFORMATIONS',
-                'utilisateurinformations.PRENOM_UTILISATEURINFORMATIONS',
-                'utilisateurinformations.MAIL_UTILISATEURINFORMATIONS',
-                'utilisateurinformations.TELFIXE_UTILISATEURINFORMATIONS',
-                'utilisateurinformations.TELPORTABLE_UTILISATEURINFORMATIONS'
             )
             ->from('dossier')
             ->leftJoin('dossier', 'platauconsultation', 'platauconsultation', 'dossier.ID_PLATAU = platauconsultation.ID_PLATAU')
-            ->leftJoin('dossier', 'dossierpreventionniste', 'dossierpreventionniste', 'dossier.ID_DOSSIER = dossierpreventionniste.ID_DOSSIER')
-            ->leftJoin('dossierpreventionniste', 'utilisateur', 'utilisateur', 'dossierpreventionniste.ID_PREVENTIONNISTE = utilisateur.ID_UTILISATEUR')
-            ->leftJoin('utilisateur', 'utilisateurinformations', 'utilisateurinformations', 'utilisateur.ID_UTILISATEURINFORMATIONS = utilisateurinformations.ID_UTILISATEURINFORMATIONS')
             ->where('dossier.ID_PLATAU = ?')
             ->setParameter(0, $consultation_id)
             ->executeQuery();
@@ -81,6 +73,29 @@ class Prevarisc
         }
 
         return $dossier;
+    }
+
+    public function recupererDossierAuteur(string $dossier_id) : array
+    {
+        $results = $this->db->createQueryBuilder()
+            ->select(
+                'utilisateurinformations.NOM_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.PRENOM_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.MAIL_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.TELFIXE_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.TELPORTABLE_UTILISATEURINFORMATIONS'
+            )
+            ->from('dossier')
+            ->leftJoin('dossier', 'dossierpreventionniste', 'dossierpreventionniste', 'dossier.ID_DOSSIER = dossierpreventionniste.ID_DOSSIER')
+            ->leftJoin('dossierpreventionniste', 'utilisateur', 'utilisateur', 'dossierpreventionniste.ID_PREVENTIONNISTE = utilisateur.ID_UTILISATEUR')
+            ->leftJoin('utilisateur', 'utilisateurinformations', 'utilisateurinformations', 'utilisateur.ID_UTILISATEURINFORMATIONS = utilisateurinformations.ID_UTILISATEURINFORMATIONS')
+            ->where('dossier.ID_DOSSIER = ?')
+            ->setParameter(0, $dossier_id)
+            ->executeQuery();
+
+        $auteur = $results->fetchAssociative();
+
+        return $auteur;
     }
 
     /**

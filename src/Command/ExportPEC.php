@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Service\PlatauPiece;
-use App\ValueObjects\PrevariscAuteur;
+use App\ValueObjects\Auteur;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -72,6 +72,7 @@ final class ExportPEC extends Command
 
                 // Récupération du dossier lié à la consultation
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
+                $auteur  = $this->prevarisc_service->recupererDossierAuteur($dossier['ID_DOSSIER']);
 
                 if (2 === $consultation['nomEtatConsultation']['idNom'] && !\in_array($dossier['STATUT_PEC'], ['to_export', 'in_error'])) {
                     continue;
@@ -105,7 +106,7 @@ final class ExportPEC extends Command
                         null,
                         $pieces,
                         'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : null,
-                        new PrevariscAuteur($dossier['PRENOM_UTILISATEURINFORMATIONS'], $dossier['NOM_UTILISATEURINFORMATIONS'], $dossier['MAIL_UTILISATEURINFORMATIONS'], $dossier['TELFIXE_UTILISATEURINFORMATIONS'], $dossier['TELPORTABLE_UTILISATEURINFORMATIONS'])
+                        new Auteur($auteur['PRENOM_UTILISATEURINFORMATIONS'], $auteur['NOM_UTILISATEURINFORMATIONS'], $auteur['MAIL_UTILISATEURINFORMATIONS'], $auteur['TELFIXE_UTILISATEURINFORMATIONS'], $auteur['TELPORTABLE_UTILISATEURINFORMATIONS']),
                     );
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')->set('DATE_PEC', ':date_pec')->setParameter('date_pec', date('Y-m-d'))->executeStatement();
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress')->executeStatement();
@@ -122,9 +123,9 @@ final class ExportPEC extends Command
                         null,
                         $pieces,
                         'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : new \DateTime(),
-                        new PrevariscAuteur($dossier['PRENOM_UTILISATEURINFORMATIONS'], $dossier['NOM_UTILISATEURINFORMATIONS'], $dossier['MAIL_UTILISATEURINFORMATIONS'], $dossier['TELFIXE_UTILISATEURINFORMATIONS'], $dossier['TELPORTABLE_UTILISATEURINFORMATIONS'])
+                        new Auteur($auteur['PRENOM_UTILISATEURINFORMATIONS'], $auteur['NOM_UTILISATEURINFORMATIONS'], $auteur['MAIL_UTILISATEURINFORMATIONS'], $auteur['TELFIXE_UTILISATEURINFORMATIONS'], $auteur['TELPORTABLE_UTILISATEURINFORMATIONS']),
                     );
-                    $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')->setValue('DATE_PEC', ':date_pec')->setParameter('date_pec', date('Y-m-d'))->executeStatement();
+                    $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')->set('DATE_PEC', ':date_pec')->setParameter('date_pec', date('Y-m-d'))->executeStatement();
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress')->executeStatement();
 
                     $output->writeln('Notification de la Prise En Compte Positive envoyée !');
