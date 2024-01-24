@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\PlatauPiece;
+use App\ValueObjects\PrevariscAuteur;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -84,7 +85,7 @@ final class ExportPEC extends Command
                         $contents = $this->prevarisc_service->recupererFichierPhysique($piece_jointe['ID_PIECEJOINTE'], $piece_jointe['EXTENSION_PIECEJOINTE']);
 
                         try {
-                            $pieces[] = $this->piece_service->uploadDocument($filename, $contents, 6); // Type document 6 = Demande de pièces complémentaires
+                            $pieces[] = $this->piece_service->uploadDocument($filename, $contents, 47); // Type document 47 = Document lié à une prise en compte métier
                             $this->prevarisc_service->changerStatutPiece($piece_jointe['ID_PIECEJOINTE'], 'exported');
                         } catch (\Exception $e) {
                             $this->prevarisc_service->changerStatutPiece($piece_jointe['ID_PIECEJOINTE'], 'on_error');
@@ -97,7 +98,15 @@ final class ExportPEC extends Command
                     $output->writeln("Notification de la Prise En Compte Négative de la consultation $consultation_id au service instructeur ...");
 
                     // Si cela concerne un premier envoi de PEC alors on place la date de la PEC Prevarisc, sinon la date du lancement de la commande
-                    $this->consultation_service->envoiPEC($consultation_id, false, $delai_reponse, null, $pieces, 'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : null);
+                    $this->consultation_service->envoiPEC(
+                        $consultation_id,
+                        false,
+                        $delai_reponse,
+                        null,
+                        $pieces,
+                        'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : null,
+                        new PrevariscAuteur($dossier['PRENOM_UTILISATEURINFORMATIONS'], $dossier['NOM_UTILISATEURINFORMATIONS'], $dossier['MAIL_UTILISATEURINFORMATIONS'], $dossier['TELFIXE_UTILISATEURINFORMATIONS'], $dossier['TELPORTABLE_UTILISATEURINFORMATIONS'])
+                    );
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')->set('DATE_PEC', ':date_pec')->setParameter('date_pec', date('Y-m-d'))->executeStatement();
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress')->executeStatement();
 
@@ -106,7 +115,15 @@ final class ExportPEC extends Command
                     $output->writeln("Notification de la Prise En Compte Positive de la consultation $consultation_id au service instructeur ...");
 
                     // Si cela concerne un premier envoi de PEC alors on place la date de la PEC Prevarisc, sinon la date du lancement de la commande
-                    $this->consultation_service->envoiPEC($consultation_id, true, $delai_reponse, null, $pieces, 'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : new \DateTime());
+                    $this->consultation_service->envoiPEC(
+                        $consultation_id,
+                        true,
+                        $delai_reponse,
+                        null,
+                        $pieces,
+                        'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : new \DateTime(),
+                        new PrevariscAuteur($dossier['PRENOM_UTILISATEURINFORMATIONS'], $dossier['NOM_UTILISATEURINFORMATIONS'], $dossier['MAIL_UTILISATEURINFORMATIONS'], $dossier['TELFIXE_UTILISATEURINFORMATIONS'], $dossier['TELPORTABLE_UTILISATEURINFORMATIONS'])
+                    );
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'PEC', 'taken_into_account')->setValue('DATE_PEC', ':date_pec')->setParameter('date_pec', date('Y-m-d'))->executeStatement();
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'in_progress')->executeStatement();
 

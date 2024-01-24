@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\PlatauPiece;
+use App\ValueObjects\PrevariscAuteur;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -103,7 +104,14 @@ final class ExportAvis extends Command
                     $est_favorable = '1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'];
                     $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
                     // Si cela concerne un premier envoi d'avis alors on place la date de l'avis Prevarisc, sinon la date du lancement de la commande
-                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, 'to_export' === $dossier['STATUT_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : new \DateTime());
+                    $this->consultation_service->versementAvis(
+                        $consultation_id,
+                        $est_favorable,
+                        $prescriptions,
+                        $pieces,
+                        'to_export' === $dossier['STATUT_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : new \DateTime(),
+                        new PrevariscAuteur($dossier['PRENOM_UTILISATEURINFORMATIONS'], $dossier['NOM_UTILISATEURINFORMATIONS'], $dossier['MAIL_UTILISATEURINFORMATIONS'], $dossier['TELFIXE_UTILISATEURINFORMATIONS'], $dossier['TELPORTABLE_UTILISATEURINFORMATIONS'])
+                    );
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')->setValue('DATE_AVIS', ':date_avis')->setParameter('date_avis', date('Y-m-d'))->executeStatement();
                     $output->writeln('Avis envoyé !');
                 } else {
