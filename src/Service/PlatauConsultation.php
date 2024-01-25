@@ -91,7 +91,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Envoi d'une PEC sur une consultation.
      */
-    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], \DateTime $date_envoi = null, Auteur $auteur) : void
+    public function envoiPEC(string $consultation_id, bool $est_positive = true, \DateInterval $date_limite_reponse_interval = null, string $observations = null, array $documents = [], \DateTime $date_envoi = null, Auteur $auteur = null) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée à la PEC
         $consultation = $this->getConsultation($consultation_id);
@@ -113,6 +113,24 @@ final class PlatauConsultation extends PlatauAbstract
         $date_envoi          = $date_envoi ?? (new \DateTime());
         $date_limite_reponse = $date_envoi->add($date_limite_reponse_interval);
 
+        $pec_metier_options = [
+            'dtPecMetier'        => $date_envoi->format('Y-m-d'),
+            'dtLimiteReponse'    => $date_limite_reponse->format('Y-m-d'),
+            'idActeurEmetteur'   => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
+            'nomStatutPecMetier' => $est_positive ? 1 : 2,
+            'txObservations'     => (string) $observations,
+            'documents'          => $documents,
+        ];
+
+        if (null !== $auteur) {
+            $pec_metier_options += [
+                'prenomAuteur'    => $auteur->prenom(),
+                'nomAuteur'       => $auteur->nom(),
+                'emailAuteur'     => $auteur->email(),
+                'telephoneAuteur' => $auteur->telephone(),
+            ];
+        }
+
         // Envoie de la PEC dans Plat'AU
         $this->request('post', 'pecMetier/consultations', [
             'json' => [
@@ -121,18 +139,7 @@ final class PlatauConsultation extends PlatauAbstract
                         [
                             'idConsultation' => $consultation_id,
                             'noVersion'      => $consultation['noVersion'],
-                            'pecMetier'      => [
-                                'dtPecMetier'            => $date_envoi->format('Y-m-d'),
-                                'dtLimiteReponse'        => $date_limite_reponse->format('Y-m-d'),
-                                'idActeurEmetteur'       => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
-                                'nomStatutPecMetier'     => $est_positive ? 1 : 2,
-                                'txObservations'         => (string) $observations,
-                                'documents'              => $documents,
-                                'prenomAuteur'           => $auteur->prenom(),
-                                'nomAuteur'              => $auteur->nom(),
-                                'emailAuteur'            => $auteur->email(),
-                                'telephoneAuteur'        => $auteur->telephone(),
-                            ],
+                            'pecMetier'      => $pec_metier_options,
                         ],
                     ],
                     'idDossier' => $consultation['dossier']['idDossier'],
@@ -145,7 +152,7 @@ final class PlatauConsultation extends PlatauAbstract
     /**
      * Versement d'un avis sur une consultation.
      */
-    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], \DateTime $date_envoi = null, Auteur $auteur) : void
+    public function versementAvis(string $consultation_id, bool $est_favorable = true, array $prescriptions = [], array $documents = [], \DateTime $date_envoi = null, Auteur $auteur = null) : void
     {
         // On recherche dans Plat'AU les détails de la consultation liée (dans les traitées et versées)
         $consultation = $this->getConsultation($consultation_id, ['nomEtatConsultation' => [3, 6]]);
@@ -159,25 +166,32 @@ final class PlatauConsultation extends PlatauAbstract
 
         $date_envoi = $date_envoi ?? (new \DateTime());
 
+        $avis_options = [
+            'idConsultation'     => $consultation_id,
+            'boEstTacite'        => false, // Un avis envoyé ne sera jamais tacite, il doit être considéré comme étant un avis "express" dans tous les cas
+            'nomNatureAvisRendu' => true === $est_favorable ? (0 === \count($prescriptions) ? 1 : 2) : 3, // 1 = favorable, 2 = favorable avec prescriptions, 3 = défavorable
+            'nomTypeAvis'        => 1, // Avis de type "simple"
+            'txAvis'             => $description,
+            'dtAvis'             => $date_envoi->format('Y-m-d'),
+            'idActeurAuteur'     => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
+            'documents'          => $documents,
+        ];
+
+        if (null !== $auteur) {
+            $avis_options += [
+                'prenomAuteur'    => $auteur->prenom(),
+                'nomAuteur'       => $auteur->nom(),
+                'emailAuteur'     => $auteur->email(),
+                'telephoneAuteur' => $auteur->telephone(),
+            ];
+        }
+
         // Versement d'un avis
         $this->request('post', 'avis', [
             'json' => [
                 [
                     'avis' => [
-                        [
-                            'idConsultation'     => $consultation_id,
-                            'boEstTacite'        => false, // Un avis envoyé ne sera jamais tacite, il doit être considéré comme étant un avis "express" dans tous les cas
-                            'nomNatureAvisRendu' => true === $est_favorable ? (0 === \count($prescriptions) ? 1 : 2) : 3, // 1 = favorable, 2 = favorable avec prescriptions, 3 = défavorable
-                            'nomTypeAvis'        => 1, // Avis de type "simple"
-                            'txAvis'             => $description,
-                            'dtAvis'             => $date_envoi->format('Y-m-d'),
-                            'idActeurAuteur'     => $this->getConfig()['PLATAU_ID_ACTEUR_APPELANT'],
-                            'documents'          => $documents,
-                            'prenomAuteur'       => $auteur->prenom(),
-                            'nomAuteur'          => $auteur->nom(),
-                            'emailAuteur'        => $auteur->email(),
-                            'telephoneAuteur'    => $auteur->telephone(),
-                        ],
+                        $avis_options,
                     ],
                     'idDossier' => $consultation['dossier']['idDossier'],
                     'noVersion' => $consultation['dossier']['noVersion'],
