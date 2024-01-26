@@ -50,7 +50,15 @@ class Prevarisc
     public function recupererDossierDeConsultation(string $consultation_id) : array
     {
         $results = $this->db->createQueryBuilder()
-            ->select('ID_DOSSIER', 'INCOMPLET_DOSSIER', 'AVIS_DOSSIER_COMMISSION', 'STATUT_PEC', 'DATE_PEC', 'STATUT_AVIS', 'DATE_AVIS')
+            ->select(
+                'dossier.ID_DOSSIER',
+                'dossier.INCOMPLET_DOSSIER',
+                'dossier.AVIS_DOSSIER_COMMISSION',
+                'platauconsultation.STATUT_PEC',
+                'platauconsultation.DATE_PEC',
+                'platauconsultation.STATUT_AVIS',
+                'platauconsultation.DATE_AVIS',
+            )
             ->from('dossier')
             ->leftJoin('dossier', 'platauconsultation', 'platauconsultation', 'dossier.ID_PLATAU = platauconsultation.ID_PLATAU')
             ->where('dossier.ID_PLATAU = ?')
@@ -65,6 +73,29 @@ class Prevarisc
         }
 
         return $dossier;
+    }
+
+    public function recupererDossierAuteur(string $dossier_id) : array
+    {
+        $results = $this->db->createQueryBuilder()
+            ->select(
+                'utilisateurinformations.NOM_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.PRENOM_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.MAIL_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.TELFIXE_UTILISATEURINFORMATIONS',
+                'utilisateurinformations.TELPORTABLE_UTILISATEURINFORMATIONS'
+            )
+            ->from('dossier')
+            ->leftJoin('dossier', 'dossierpreventionniste', 'dossierpreventionniste', 'dossier.ID_DOSSIER = dossierpreventionniste.ID_DOSSIER')
+            ->leftJoin('dossierpreventionniste', 'utilisateur', 'utilisateur', 'dossierpreventionniste.ID_PREVENTIONNISTE = utilisateur.ID_UTILISATEUR')
+            ->leftJoin('utilisateur', 'utilisateurinformations', 'utilisateurinformations', 'utilisateur.ID_UTILISATEURINFORMATIONS = utilisateurinformations.ID_UTILISATEURINFORMATIONS')
+            ->where('dossier.ID_DOSSIER = ?')
+            ->setParameter(0, $dossier_id)
+            ->executeQuery();
+
+        $auteur = $results->fetchAssociative();
+
+        return $auteur;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\PlatauPiece;
+use App\ValueObjects\Auteur;
 use App\Service\Prevarisc as PrevariscService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
@@ -72,6 +73,7 @@ final class ExportAvis extends Command
 
                 // Récupération du dossier dans Prevarisc
                 $dossier = $this->prevarisc_service->recupererDossierDeConsultation($consultation_id);
+                $auteur  = $this->prevarisc_service->recupererDossierAuteur($dossier['ID_DOSSIER']);
 
                 if (6 === $consultation['nomEtatConsultation']['idNom'] && !\in_array($dossier['STATUT_AVIS'], ['to_export', 'in_error'])) {
                     continue;
@@ -103,8 +105,15 @@ final class ExportAvis extends Command
                     $est_favorable = '1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'];
                     $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
                     // Si cela concerne un premier envoi d'avis alors on place la date de l'avis Prevarisc, sinon la date du lancement de la commande
-                    $this->consultation_service->versementAvis($consultation_id, $est_favorable, $prescriptions, $pieces, 'to_export' === $dossier['STATUT_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : new \DateTime());
-                    $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')->setValue('DATE_AVIS', ':date_avis')->setParameter('date_avis', date('Y-m-d'))->executeStatement();
+                    $this->consultation_service->versementAvis(
+                        $consultation_id,
+                        $est_favorable,
+                        $prescriptions,
+                        $pieces,
+                        'to_export' === $dossier['STATUT_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : new \DateTime(),
+                        new Auteur($auteur['PRENOM_UTILISATEURINFORMATIONS'], $auteur['NOM_UTILISATEURINFORMATIONS'], $auteur['MAIL_UTILISATEURINFORMATIONS'], $auteur['TELFIXE_UTILISATEURINFORMATIONS'], $auteur['TELPORTABLE_UTILISATEURINFORMATIONS']),
+                    );
+                    $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')->set('DATE_AVIS', ':date_avis')->setParameter('date_avis', date('Y-m-d'))->executeStatement();
                     $output->writeln('Avis envoyé !');
                 } else {
                     $output->writeln("Impossible d'envoyer un avis pour la consultation $consultation_id pour le moment (en attente de l'avis de commission dans Prevarisc) ...");
