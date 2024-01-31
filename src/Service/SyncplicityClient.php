@@ -195,6 +195,6 @@ class SyncplicityClient
      */
     private static function getFileSize(string $file_contents) : int
     {
-        return false === mb_detect_encoding($file_contents, strict: true) ? mb_strlen($file_contents) : mb_strlen($file_contents);
+        return false === mb_detect_encoding($file_contents, null, true) ? mb_strlen($file_contents) : mb_strlen($file_contents);
     }
 }
