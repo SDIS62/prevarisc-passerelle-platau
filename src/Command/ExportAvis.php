@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Service\PlatauAvis;
 use App\Service\PlatauPiece;
 use App\ValueObjects\Auteur;
 use App\Service\Prevarisc as PrevariscService;
@@ -16,15 +17,17 @@ final class ExportAvis extends Command
     private PrevariscService $prevarisc_service;
     private PlatauConsultationService $consultation_service;
     private PlatauPiece $piece_service;
+    private PlatauAvis $avis_service;
 
     /**
      * Initialisation de la commande.
      */
-    public function __construct(PrevariscService $prevarisc_service, PlatauConsultationService $consultation_service, PlatauPiece $piece_service)
+    public function __construct(PrevariscService $prevarisc_service, PlatauConsultationService $consultation_service, PlatauPiece $piece_service, PlatauAvis $avis_service)
     {
         $this->prevarisc_service    = $prevarisc_service;
         $this->consultation_service = $consultation_service;
         $this->piece_service        = $piece_service;
+        $this->avis_service         = $avis_service;
         parent::__construct();
     }
 
@@ -105,12 +108,19 @@ final class ExportAvis extends Command
                     $est_favorable = '1' === (string) $dossier['AVIS_DOSSIER_COMMISSION'];
                     $output->writeln("Versement d'un avis ".($est_favorable ? 'favorable' : 'défavorable')." pour la consultation $consultation_id au service instructeur ...");
                     // Si cela concerne un premier envoi d'avis alors on place la date de l'avis Prevarisc, sinon la date du lancement de la commande
+                    $date_envoi = new \DateTime();
+
+                    if ('to_export' === $dossier['STATUT_AVIS']) {
+                        $avis       = $this->avis_service->getAvisForConsultation($consultation_id);
+                        $date_envoi = null !== $dossier['DATE_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : \DateTime::createFromFormat('Y-m-d', $avis['dtAvis']);
+                    }
+
                     $this->consultation_service->versementAvis(
                         $consultation_id,
                         $est_favorable,
                         $prescriptions,
                         $pieces,
-                        'to_export' === $dossier['STATUT_AVIS'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_AVIS']) : new \DateTime(),
+                        $date_envoi,
                         new Auteur($auteur['PRENOM_UTILISATEURINFORMATIONS'], $auteur['NOM_UTILISATEURINFORMATIONS'], $auteur['MAIL_UTILISATEURINFORMATIONS'], $auteur['TELFIXE_UTILISATEURINFORMATIONS'], $auteur['TELPORTABLE_UTILISATEURINFORMATIONS']),
                     );
                     $this->prevarisc_service->setMetadonneesEnvoi($consultation_id, 'AVIS', 'treated')->set('DATE_AVIS', ':date_avis')->setParameter('date_avis', date('Y-m-d'))->executeStatement();
