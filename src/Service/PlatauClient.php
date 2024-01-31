@@ -8,6 +8,7 @@ namespace App\Service;
  * @property PlatauHealthcheck  $healthcheck
  * @property PlatauNotification $notifications
  * @property PlatauPiece        $pieces
+ * @property PlatauAvis         $avis
  */
 class PlatauClient extends PlatauAbstract
 {
@@ -17,6 +18,7 @@ class PlatauClient extends PlatauAbstract
         'healthcheck'   => PlatauHealthcheck::class,
         'notifications' => PlatauNotification::class,
         'pieces'        => PlatauPiece::class,
+        'avis'          => PlatauAvis::class,
     ];
 
     /**
