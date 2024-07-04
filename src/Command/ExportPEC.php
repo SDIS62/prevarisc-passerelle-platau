@@ -93,6 +93,7 @@ final class ExportPEC extends Command
                         }
                     }
                 }
+                $documentsManquants = $this->prevarisc_service->recupererDocumentsManquants($dossier['ID_DOSSIER']);
 
                 // Si le dossier est déclaré incomplet, on envoie une PEC négative
                 if ('1' === (string) $dossier['INCOMPLET_DOSSIER']) {
@@ -103,7 +104,7 @@ final class ExportPEC extends Command
                         $consultation_id,
                         false,
                         $delai_reponse,
-                        null,
+                        $documentsManquants,
                         $pieces,
                         'to_export' === $dossier['STATUT_PEC'] ? \DateTime::createFromFormat('Y-m-d', $dossier['DATE_PEC']) : null,
                         new Auteur($auteur['PRENOM_UTILISATEURINFORMATIONS'], $auteur['NOM_UTILISATEURINFORMATIONS'], $auteur['MAIL_UTILISATEURINFORMATIONS'], $auteur['TELFIXE_UTILISATEURINFORMATIONS'], $auteur['TELPORTABLE_UTILISATEURINFORMATIONS']),

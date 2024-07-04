@@ -98,6 +98,21 @@ class Prevarisc
         return $auteur;
     }
 
+    public function recupererDocumentsManquants(string $dossier_id) : string
+    {
+        $results = $this->db->createQueryBuilder()
+            ->select('dossierdocmanquant.DOCMANQUANT')
+            ->from('dossierdocmanquant')
+            ->innerJoin('dossierdocmanquant', 'dossier', 'dossier', 'dossierdocmanquant.ID_DOSSIER = dossier.ID_DOSSIER')
+            ->where('dossier.ID_DOSSIER = ?')
+            ->setParameter(0, $dossier_id)
+            ->executeQuery();
+    
+        $documentManquant = $results->fetchOne();
+        
+        return $documentManquant;
+    }
+    
     /**
      * Vérifie que la consultation existe dans Prevarisc.
      */
