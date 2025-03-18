@@ -92,6 +92,25 @@ class SyncplicityClient
     }
 
     /**
+     * Récupération des métadonnées de tous les fichiers présents dans le dossier du consommateur appelant le service.
+     */
+    public function getFiles() : array
+    {
+        $response = $this->request('GET', 'files', [
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json'
+            ]
+        ]);
+
+        $json = json_decode($response->getBody()->__toString(), true, 512, \JSON_THROW_ON_ERROR);
+
+        assert(is_array($json));
+
+        return $json;
+    }
+
+    /**
      * Upload d'un document.
      */
     public function upload(string $file_contents, string $file_name) : array

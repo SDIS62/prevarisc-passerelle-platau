@@ -52,6 +52,10 @@ final class Healthcheck extends Command
 
         $output->writeln("Plat'AU : OK");
 
+        if($this->healthcheck_service->getSyncplicity()) {
+            $this->healthcheck_service->getSyncplicity()->getFiles();
+        }
+
         // On va maintenant tester la connexion à la base de données Prevarisc
         if (!$this->prevarisc_service->estDisponible()) {
             throw new \Exception('Base de données Prevarisc déconnectée.');
