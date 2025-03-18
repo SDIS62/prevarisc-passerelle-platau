@@ -33,6 +33,7 @@ final class Platau implements ServiceProvider
         }
 
         // Création des services Plat'AU
+        $c->set('service.platau', fn () => $client);
         $c->set('service.platau.consultation', fn () => $client->consultations);
         $c->set('service.platau.notification', fn () => $client->notifications);
         $c->set('service.platau.acteur', fn () => $client->acteurs);
